@@ -1,38 +1,46 @@
-import { hilog } from '@kit.PerformanceAnalysisKit';
-import { Logger } from '../common/utils/Logger';
+import Home from '../views/home/Home'
+import Interview from '../views/interview/Interview'
+import Mine from '../views/mine/Mine'
+import Project from '../views/project/Project'
 
 @Entry
 @Component
 struct Index {
-  @State message: string = 'Hello World';
+  @State currentIndex: number = 0 // 表示默认选中的是第一个tab栏
+
+  // 自定义tab的标签栏
+  @Builder
+  tabBuilder(text: string, icon: ResourceStr, selectedIcon: ResourceStr, index: number) {
+    Column({ space: 5 }) {
+      Image(this.currentIndex === index ? selectedIcon : icon)
+        .height(26)
+        .aspectRatio(1)
+      Text(text)
+        .fontSize(12)
+        .fontColor(this.currentIndex === index ? $r('app.color.common_blue') : Color.Black)
+    }
+  }
 
   build() {
-    Column({ space: 20 }) {
+    Tabs({ index: $$this.currentIndex }) {
+      TabContent() {
+        Home()
+      }.tabBar(this.tabBuilder('首页', $r('app.media.home'), $r('app.media.home_select'), 0))
 
-      Button('hilog.info测试').onClick(() => {
-        // 普通的info日志，使用info方法来打印
-        // 第一个参数：0x0000 表示当前日志的域为0
-        // 第二个参数：表示此系统的日志过滤关键字为 mylog,可以在deveco的日志面板中去过滤查看日志
-        // 第三个参数：%{public}s表示以明文的形式来显示字符串日志
-        // 第四个及其以后的参数：表示要打印的日志
-        Logger.info('info111')
-      })
+      TabContent() {
+        Project()
+      }.tabBar(this.tabBuilder('项目', $r('app.media.tabbar_project'), $r('app.media.project_select'), 1))
 
-      Button('hilog.debug测试').onClick(() => {
-        // debug表示调试日志，将来上线之后不会被执行
-        Logger.debug('debug111')
-      })
+      TabContent() {
+        Interview()
+      }.tabBar(this.tabBuilder('面经', $r('app.media.interview'), $r('app.media.interview_select'), 2))
 
-      Button('hilog.warn测试').onClick(() => {
-        // 警告日志
-        Logger.warn('warn111')
-      })
+      TabContent() {
+        Mine()
+      }.tabBar(this.tabBuilder('我的', $r('app.media.tabbar_mine'), $r('app.media.mine_select'), 3))
 
-      Button('hilog.error测试').onClick(() => {
-        // 错误日志，当代码出错时调用
-        Logger.error('error111')
-      })
-    }.width('100%')
-    .height('100%')
+    }
+    .animationDuration(0) // 去掉切换动画
+    .barPosition(BarPosition.End) // tabs在底部显示
   }
 }
