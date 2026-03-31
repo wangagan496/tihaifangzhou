@@ -2,10 +2,21 @@ import Home from '../views/home/Home'
 import Interview from '../views/interview/Interview'
 import Mine from '../views/mine/Mine'
 import Project from '../views/project/Project'
+import { window } from '@kit.ArkUI'
+import { windowManager } from '../common/utils/WindowManager'
 
 @Entry
 @Component
 struct Index {
+  //1、设置全屏，setWindowLayoutFullScreen
+  //2、获取顶部高度，getWindowAvoidArea，将px转vp，存到AppStorage中
+  aboutToAppear(): void {
+    windowManager.UiCtx = this.getUIContext()
+    windowManager.ctx = this.getUIContext().getHostContext()!
+    // 开启全屏
+    windowManager.enableFullScreen()
+  }
+
   @State currentIndex: number = 0 // 表示默认选中的是第一个tab栏
 
   // 自定义tab的标签栏
@@ -24,7 +35,7 @@ struct Index {
   build() {
     Tabs({ index: $$this.currentIndex }) {
       TabContent() {
-        if (this.currentIndex === 0){
+        if (this.currentIndex === 0) {
           Home()
         }
       }.tabBar(this.tabBuilder('首页', $r('app.media.home'), $r('app.media.home_select'), 0))
@@ -50,5 +61,6 @@ struct Index {
     }
     .animationDuration(0) // 去掉切换动画
     .barPosition(BarPosition.End) // tabs在底部显示
+    .padding({ bottom: 15 })
   }
 }
