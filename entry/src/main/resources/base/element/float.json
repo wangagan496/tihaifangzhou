@@ -103,6 +103,10 @@
     {
       "name": "hd_list_load_icon",
       "value": "24vp"
+    },
+    {
+      "name": "page_text_font_size",
+      "value": "50fp"
     }
   ]
 }
