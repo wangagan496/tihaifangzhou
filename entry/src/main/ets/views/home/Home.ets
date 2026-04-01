@@ -1,18 +1,52 @@
+import { TgClockIn } from "../../common/components/TgClockIn"
+import { TgSearch } from "../../common/components/TgSearch"
+
+
 @Component
 export default struct Home {
-  aboutToAppear(): void {
-    console.log("Home aboutToAppear");
-  }
-
-  @StorageProp('topHeight') topHeight: number = 0;
+  // 获取AppStorage中的数据
+  @StorageProp("topHeight") topHeight: number = 0
 
   build() {
     Column() {
-      Text("Home");
+      Row({ space: 10 }) {
+        // 1.0 搜索组件静态
+        TgSearch()
+          .layoutWeight(3) // 占3/4份
+        // 2.0 打卡组件
+        TgClockIn()
+          .layoutWeight(1) //占1/4
+      }
+      .padding(10)
+
+      // 3.0 轮播图
+      Swiper() {
+        Image($r('app.media.banner_qa'))
+          .objectFit(ImageFit.Fill)
+          .height(200)
+          .borderRadius(10)
+        
+
+        Image($r('app.media.banner_pj'))
+          .objectFit(ImageFit.Fill)
+          .height(200)
+          .borderRadius(10)
+
+
+        Image($r('app.media.banner_ai'))
+          .objectFit(ImageFit.Fill)
+          .height(200)
+          .borderRadius(10)
+
+      }
+      .padding(10)
+      .autoPlay(true)
+      .indicator(DotIndicator.dot()
+        .selectedColor(Color.White)
+        .bottom(20))
     }
     .padding({ top: this.topHeight })
-    .width('100%')
     .height('100%')
-    .backgroundColor(Color.Pink)
+    .width('100%')
   }
 }
