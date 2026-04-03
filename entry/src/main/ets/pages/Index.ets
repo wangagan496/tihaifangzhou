@@ -11,8 +11,6 @@ struct Index {
   //1、设置全屏，setWindowLayoutFullScreen
   //2、获取顶部高度，getWindowAvoidArea，将px转vp，存到AppStorage中
   aboutToAppear(): void {
-    windowManager.UiCtx = this.getUIContext()
-    windowManager.ctx = this.getUIContext().getHostContext()!
     // 开启全屏
     windowManager.enableFullScreen()
   }

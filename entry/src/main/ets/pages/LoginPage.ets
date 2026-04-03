@@ -1,7 +1,8 @@
 import axios, { AxiosResponse } from '@ohos/axios'
-import { instance } from '../common/utils/request'
-import { ILoginBody, ILoginRes } from '../models/AccountModel'
+import { instance, request } from '../common/utils/request'
+import { ILoginBody, ILoginDta, ILoginRes } from '../models/AccountModel'
 import { http } from '@kit.NetworkKit'
+import { contextManager } from '../common/utils/ContextManager'
 
 @Entry
 @Component
@@ -11,6 +12,11 @@ struct LoginPage {
   @State isAgree: boolean = false
   //
   @State isLoading: boolean = false
+
+  aboutToAppear(): void {
+    contextManager.ctx = this.getUIContext().getHostContext()!
+    contextManager.UiCtx = this.getUIContext()
+  }
 
   async login() {
     if (this.username === '' || this.password === '') {
@@ -26,31 +32,33 @@ struct LoginPage {
     try {
       // 5、加载组件的显示隐藏
       this.isLoading = true
-      const res: AxiosResponse<ILoginRes> =
-        await instance.post<null, AxiosResponse<ILoginRes>, ILoginBody>('/hm/login', {
+      // const res: AxiosResponse<ILoginRes> =
+      //   await instance.post<null, AxiosResponse<ILoginRes>, ILoginBody>('/hm/login', {
+      //     username: this.username,
+      //     password: this.password
+      //   })
+
+      const res = await request<ILoginDta, ILoginBody>({
+        url: '/hm/login',
+        method: 'POST',
+        data: {
           username: this.username,
           password: this.password
-        })
-      // 1、请求成功中，判断业务是否成功
-      if (res.data.code === 10000) {
-        // 2、保存用户信息
-        AppStorage.setOrCreate('user', res.data.data)
-        // 3、延时0.5s跳转
-        setTimeout(() => {
-          this.getUIContext().getRouter().replaceUrl({
-            url: 'pages/Index'
-          })
-          // 4、显示提示
-          this.getUIContext().getPromptAction().showToast({
-            message: '登录成功'
-          })
-        }, 500)
-
-      }
-    } catch (e) {
-      return this.getUIContext().getPromptAction().showToast({
-        message: JSON.stringify(e, null, 2)
+        }
       })
+
+      // 2、保存用户信息
+      AppStorage.setOrCreate('user', res)
+      // 3、延时0.5s跳转
+      setTimeout(() => {
+        this.getUIContext().getRouter().replaceUrl({
+          url: 'pages/Index'
+        })
+        // 4、显示提示
+        this.getUIContext().getPromptAction().showToast({
+          message: '登录成功'
+        })
+      }, 500)
     } finally {
       this.isLoading = false
     }

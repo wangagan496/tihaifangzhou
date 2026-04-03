@@ -1,19 +1,16 @@
 import { window } from '@kit.ArkUI'
-import { Context } from '@kit.AbilityKit'
+import { contextManager } from './ContextManager'
 
 class WindowManager {
-  UiCtx: UIContext | null = null
-  ctx: Context | null = null
-
   // 启动全屏
   enableFullScreen() {
-    if (this.ctx) {
-      window.getLastWindow(this.ctx)
+    if (contextManager.getCtx()) {
+      window.getLastWindow(contextManager.getCtx())
         .then((win) => {
           win.setWindowLayoutFullScreen(true)
           const topHeight = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM)
-          if (this.UiCtx) {
-            AppStorage.setOrCreate('topHeight', this.UiCtx.px2vp(topHeight.topRect.height))
+          if (contextManager.getUiCtx()) {
+            AppStorage.setOrCreate('topHeight', contextManager.getUiCtx()!.px2vp(topHeight.topRect.height))
           }
         })
     }
@@ -21,8 +18,8 @@ class WindowManager {
 
   // 关闭全屏
   disableFullScreen() {
-    if (this.ctx) {
-      window.getLastWindow(this.ctx)
+    if (contextManager.getCtx()) {
+      window.getLastWindow(contextManager.getCtx())
         .then((win) => {
           win.setWindowLayoutFullScreen(false)
           AppStorage.setOrCreate('topHeight', 0)
@@ -32,8 +29,8 @@ class WindowManager {
 
   // 设置状态栏亮色
   setStatusBarLight() {
-    if (this.ctx) {
-      window.getLastWindow(this.ctx)
+    if (contextManager.getCtx()) {
+      window.getLastWindow(contextManager.getCtx())
         .then((win) => {
           win.setWindowSystemBarProperties({
             statusBarContentColor: "#ffffff"
@@ -45,8 +42,8 @@ class WindowManager {
 
   // 设置状态栏暗色
   setStatusBarDark() {
-    if (this.ctx) {
-      window.getLastWindow(this.ctx)
+    if (contextManager.getCtx()) {
+      window.getLastWindow(contextManager.getCtx())
         .then((win) => {
           win.setWindowSystemBarProperties({
             statusBarContentColor: "#000000"
