@@ -1,5 +1,6 @@
 import { TgClockIn } from "../../common/components/TgClockIn"
 import { TgSearch } from "../../common/components/TgSearch"
+import { HomeCategoryComp } from "./HomeCategoryComp"
 
 
 @Component
@@ -25,7 +26,7 @@ export default struct Home {
           .objectFit(ImageFit.Fill)
           .height(200)
           .borderRadius(10)
-        
+
 
         Image($r('app.media.banner_pj'))
           .objectFit(ImageFit.Fill)
@@ -44,6 +45,9 @@ export default struct Home {
       .indicator(DotIndicator.dot()
         .selectedColor(Color.White)
         .bottom(20))
+
+      //   4.0 使用题目的分类组件
+      HomeCategoryComp()
     }
     .padding({ top: this.topHeight })
     .height('100%')

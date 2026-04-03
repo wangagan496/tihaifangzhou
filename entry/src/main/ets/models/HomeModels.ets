@@ -1,3 +1,5 @@
+import { QuestionItem } from "../views/home/QuestionItemComp";
+
 export interface IClockRes {
   /**
    * 请求成功10000标志
@@ -53,4 +55,19 @@ export interface Clockin {
   id: string;
 }
 
+
+export interface IListData {
+  /**
+   * 总页数
+   */
+  pageTotal: number;
+  /**
+   * 数据集合
+   */
+  rows: QuestionItem[];
+  /**
+   * 总数
+   */
+  total: number;
+}
 
