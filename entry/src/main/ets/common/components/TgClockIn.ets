@@ -44,6 +44,11 @@ export struct TgClockIn {
           }
         }
         .width('50')
+        .onClick(() => {
+          this.getUIContext().getRouter().pushUrl({
+            url: 'pages/ClockPage'
+          })
+        })
       } else {
         Text('打卡')
           .width('50')
