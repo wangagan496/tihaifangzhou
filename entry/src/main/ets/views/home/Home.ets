@@ -48,6 +48,7 @@ export default struct Home {
 
       //   4.0 使用题目的分类组件
       HomeCategoryComp()
+        .layoutWeight(1)
     }
     .padding({ top: this.topHeight })
     .height('100%')

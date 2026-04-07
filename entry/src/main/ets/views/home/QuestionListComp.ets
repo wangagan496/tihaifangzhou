@@ -39,6 +39,7 @@ export struct QuestionListComp {
 
         })
       }
+      .layoutWeight(1)
 
     }
     .justifyContent(FlexAlign.Start)
