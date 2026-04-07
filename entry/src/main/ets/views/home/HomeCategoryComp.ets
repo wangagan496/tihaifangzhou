@@ -1,11 +1,13 @@
 import { request } from "../../common/utils/request"
 import { IQuestionType } from "../../models/CategoryModel"
+import { QuestionFilterComp } from "./QuestionFilterComp"
 import { QuestionListComp } from "./QuestionListComp"
 
 @Component
 export struct HomeCategoryComp {
   @State index: number = 0
   @State questionTypeList: IQuestionType[] = []
+  @State isShow: boolean = false
 
   aboutToAppear(): void {
     this.getTabBarData()
@@ -68,10 +70,30 @@ export struct HomeCategoryComp {
           .height(44)
           .objectFit(ImageFit.Contain) // 设置图片按照容器大小填满
       }
+      .bindSheet(this.isShow, this.filterBuilder(), {
+        showClose: false, //关闭x
+        height: 400
+      })
+      .onClick(() => {
+        this.isShow = true
+      })
       .width(54)
       .height(44)
       .justifyContent(FlexAlign.Center) // 图片居中对齐
       .backgroundColor(Color.White) // 设置背景色位白色，使过滤条件图标能遮盖住tabbar的文字
+    }
+  }
+
+  @Builder
+  filterBuilder() {
+    // 一定要使用容器包裹住QuestionFilterComp组件，否则打不开
+    Column() {
+      QuestionFilterComp({
+        questionTypeList: this.questionTypeList,
+        onSubmit: () => {
+          this.isShow = false
+        }
+      })
     }
   }
 }

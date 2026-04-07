@@ -2,6 +2,7 @@ import { LoadingDialog } from "../../common/components/LoadingDialog"
 import { request } from "../../common/utils/request"
 import { IListData } from "../../models/HomeModels"
 import { QuestionItem, QuestionItemComp } from "./QuestionItemComp"
+import { FaultLogExtensionAbility } from "@kit.PerformanceAnalysisKit"
 
 @Component
 export struct QuestionListComp {
@@ -11,43 +12,28 @@ export struct QuestionListComp {
   // 控制刷新
   @State refreshing: boolean = false
   page: number = 0
-  total: number = 1
+  totalPage: number = 1
   // 请求中
   isRequesting: boolean = false
 
   // 1、HomeCategoryComp传递id
   //  2、在QuestionListComp中请求数据，通过id，必传：questionBankType：10
   // 3、QuestionItemComp，将数据传递给item组件
-  async getListById() {
-    const res = await request<IListData>({
-      url: '/hm/question/list',
-      params: {
-        type: this.typeId,
-        questionBankType: 10
+
+  async loadData(isLoadMore: boolean) {
+    if (isLoadMore) {
+      // 加载更多
+      if (this.page >= this.totalPage) {
+        this.isRequesting = false
+        return
       }
-    })
-    this.list = res.rows
-  }
-
-  async onFresh() {
-    await this.getListById()
-    this.refreshing = false
-    this.page = 1
-    this.isRequesting = false
-  }
-
-  async onLoadMore() {
-    if (this.isRequesting === true) {
-      return
+      this.page++
+      this.dialog.open()
+    } else {
+      // 刷新
+      this.page = 1
     }
-    this.isRequesting = true
-
-    if (this.total <= this.list.length) {
-      return
-    }
-    this.page++
-    console.log('this.page---', this.page)
-    this.dialog.open()
+    // 请求数据,共用内容
     const res = await request<IListData>({
       url: '/hm/question/list',
       params: {
@@ -56,17 +42,19 @@ export struct QuestionListComp {
         page: this.page
       }
     })
-    this.dialog.close()
-    console.log('res.rows---', res.rows)
-    this.total = res.total
-    this.list.push(...res.rows)
-    this.isRequesting = false
+    this.totalPage = res.pageTotal
+
+    if (isLoadMore) {
+      // 加载更多
+      this.list.push(...res.rows)
+      this.isRequesting = false
+      this.dialog.close()
+    } else {
+      // 刷新
+      this.list = res.rows
+      this.refreshing = false
+    }
   }
-
-  // 1、列表项不居顶问题，给list加高度
-  // 2、Refresh组件，onRefreshing
-  // 3、状态变量，refreshing，控制下拉刷新
-
 
   // 自定义弹窗
   dialog = new CustomDialogController({
@@ -88,11 +76,13 @@ export struct QuestionListComp {
           })
         }.layoutWeight(1)
         .onReachEnd(() => {
-          this.onLoadMore()
+          if (!this.isRequesting && this.page < this.totalPage) {
+            this.loadData(true)
+          }
         })
       }.layoutWeight(1)
       .onRefreshing(() => {
-        this.onFresh()
+        this.loadData(false)
       })
 
     }
