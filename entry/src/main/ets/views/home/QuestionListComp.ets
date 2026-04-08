@@ -3,6 +3,7 @@ import { request } from "../../common/utils/request"
 import { IListData } from "../../models/HomeModels"
 import { QuestionItem, QuestionItemComp } from "./QuestionItemComp"
 import { FaultLogExtensionAbility } from "@kit.PerformanceAnalysisKit"
+import { FilterParams } from "./QuestionFilterComp"
 
 @Component
 export struct QuestionListComp {
@@ -15,12 +16,23 @@ export struct QuestionListComp {
   totalPage: number = 1
   // 请求中
   isRequesting: boolean = false
+  // 监听参数变化
+  @Watch('onFilterParamsChange')
+  @Prop params: FilterParams
+  selfIndex: number = 0
 
-  // 1、HomeCategoryComp传递id
-  //  2、在QuestionListComp中请求数据，通过id，必传：questionBankType：10
-  // 3、QuestionItemComp，将数据传递给item组件
+  onFilterParamsChange() {
+    this.loadData(false)
+  }
+
+  // 1、给列表传递selfIndex
+  // 2、比较selfIndex和params.index，如果相同则加载数据
 
   async loadData(isLoadMore: boolean) {
+    if (this.selfIndex !== this.params.index) {
+      return
+    }
+
     if (isLoadMore) {
       // 加载更多
       if (this.page >= this.totalPage) {
@@ -39,7 +51,8 @@ export struct QuestionListComp {
       params: {
         type: this.typeId,
         questionBankType: 10,
-        page: this.page
+        page: this.page,
+        sort: this.params.sort,
       }
     })
     this.totalPage = res.pageTotal
