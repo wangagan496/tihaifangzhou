@@ -85,6 +85,13 @@ export struct QuestionListComp {
                 item
               })
                 .padding({ left: 10, right: 10 })
+                .onClick(()=>{
+                  this.getUIContext().getRouter().pushUrl({
+                    url:'pages/QuestionDetailPage',
+                    params: {
+                      id: item.id
+                    }})
+                })
             }
           })
         }.layoutWeight(1)

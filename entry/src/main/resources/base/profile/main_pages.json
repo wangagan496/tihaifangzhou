@@ -2,6 +2,8 @@
   "src": [
     "pages/Index",
     "pages/LoginPage",
-    "pages/ClockPage"
+    "pages/ClockPage",
+    "pages/RichTextPage",
+    "pages/QuestionDetailPage"
   ]
 }
