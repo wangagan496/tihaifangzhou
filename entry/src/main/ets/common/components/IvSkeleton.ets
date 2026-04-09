@@ -4,6 +4,7 @@ export struct IvSkeleton {
   @State translageX: string = '-100%' // 定义闪电效果的位置
   widthValue: number = 28
   heightValue: number = 100
+  bgColor: ResourceStr = 'rgba(0,0,0,0.5)'
 
   build() {
     Stack() {
@@ -11,7 +12,7 @@ export struct IvSkeleton {
       Text()
         .height(this.heightValue)
         .width(this.widthValue)
-        .backgroundColor('rgba(0,0,0,0.5)')
+        .backgroundColor(this.bgColor)
         .borderRadius(5)
       // 闪电效果
       Text()
@@ -32,7 +33,7 @@ export struct IvSkeleton {
           angle: 90,
           colors: [
             ['rgba(255,255,255,0)', 0],
-            ['rgba(255,255,255,1)', 0.5],
+            [$r('app.color.common_blue_bg'), 0.5],
             ['rgba(255,255,255,0)', 1]
           ]
         })

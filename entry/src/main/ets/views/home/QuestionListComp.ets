@@ -1,4 +1,4 @@
-import { LoadingDialog } from "../../common/components/LoadingDialog"
+import { TgLoadingDialog } from "../../common/components/TgLoadingDialog"
 import { request } from "../../common/utils/request"
 import { IListData } from "../../models/HomeModels"
 import { QuestionItem, QuestionItemComp } from "./QuestionItemComp"
@@ -67,11 +67,13 @@ export struct QuestionListComp {
       this.list = res.rows
       this.refreshing = false
     }
+
+    AppStorage.setOrCreate('idList', this.list.map(item => item.id))
   }
 
   // 自定义弹窗
   dialog = new CustomDialogController({
-    builder: LoadingDialog({ message: '加载中...' }),
+    builder: TgLoadingDialog({ message: '加载中...' }),
     customStyle: true,
   })
 
@@ -85,12 +87,13 @@ export struct QuestionListComp {
                 item
               })
                 .padding({ left: 10, right: 10 })
-                .onClick(()=>{
+                .onClick(() => {
                   this.getUIContext().getRouter().pushUrl({
-                    url:'pages/QuestionDetailPage',
+                    url: 'pages/QuestionDetailPage',
                     params: {
                       id: item.id
-                    }})
+                    }
+                  })
                 })
             }
           })

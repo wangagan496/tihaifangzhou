@@ -1,5 +1,5 @@
 @CustomDialog
-export struct LoadingDialog {
+export struct TgLoadingDialog {
   @State
   message: string = ''
   controller: CustomDialogController
