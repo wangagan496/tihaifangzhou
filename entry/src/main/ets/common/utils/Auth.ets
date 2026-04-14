@@ -31,11 +31,11 @@ class Auth {
   // 2、登录页面，登录成功后，将参数从登录页面取出，跳转页面，登录页面使用replaceUrl跳转
   // 3、原来url参数为LoginPage的，修改为目标页面
   // 4、使用getRouter跳转的都改为checkAuth，参数直接传递到checkAuth
-  checkAuth(options: router.RouterOptions,login: boolean = false) {
+  checkAuth(options: router.RouterOptions,isLogin: boolean = false) {
     const user = this.getUser();
     // 登录了就跳转页面
     if (user?.token) {
-      if (login) {
+      if (isLogin) {
         contextManager.UiCtx?.getRouter().replaceUrl( options)
          return
       }
