@@ -1,8 +1,7 @@
-import axios, { AxiosResponse } from '@ohos/axios'
-import { instance, request } from '../common/utils/request'
-import { ILoginBody, ILoginDta, ILoginRes } from '../models/AccountModel'
-import { http } from '@kit.NetworkKit'
-import { contextManager } from '../common/utils/ContextManager'
+import { auth } from '../common/utils/Auth'
+import { request } from '../common/utils/request'
+import { ILoginBody, ILoginDta } from '../models/AccountModel'
+import { router } from '@kit.ArkUI'
 
 @Entry
 @Component
@@ -12,10 +11,13 @@ struct LoginPage {
   @State isAgree: boolean = false
   //
   @State isLoading: boolean = false
+  routerParams: router.RouterOptions | undefined = undefined
 
   aboutToAppear(): void {
-    contextManager.ctx = this.getUIContext().getHostContext()!
-    contextManager.UiCtx = this.getUIContext()
+    const params = this.getUIContext().getRouter().getParams()
+    if (params) {
+      this.routerParams = params as router.RouterOptions
+    }
   }
 
   async login() {
@@ -48,12 +50,12 @@ struct LoginPage {
       })
 
       // 2、保存用户信息
-      AppStorage.setOrCreate('user', res)
+      auth.setUser(res)
       // 3、延时0.5s跳转
       setTimeout(() => {
-        this.getUIContext().getRouter().replaceUrl({
-          url: 'pages/Index'
-        })
+        if (this.routerParams) {
+          auth.checkAuth(this.routerParams, true)
+        }
         // 4、显示提示
         this.getUIContext().getPromptAction().showToast({
           message: '登录成功'

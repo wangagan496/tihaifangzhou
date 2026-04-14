@@ -1,9 +1,9 @@
-import { TgLoadingDialog } from "../../common/components/TgLoadingDialog"
-import { request } from "../../common/utils/request"
-import { IListData } from "../../models/HomeModels"
-import { QuestionItem, QuestionItemComp } from "./QuestionItemComp"
-import { FaultLogExtensionAbility } from "@kit.PerformanceAnalysisKit"
-import { FilterParams } from "./QuestionFilterComp"
+import { TgLoadingDialog } from '../../common/components/TgLoadingDialog'
+import { request } from '../../common/utils/request'
+import { IListData } from '../../models/HomeModels'
+import { QuestionItem, QuestionItemComp } from './QuestionItemComp'
+import { FilterParams } from './QuestionFilterComp'
+import { auth } from '../../common/utils/Auth'
 
 @Component
 export struct QuestionListComp {
@@ -88,7 +88,7 @@ export struct QuestionListComp {
               })
                 .padding({ left: 10, right: 10 })
                 .onClick(() => {
-                  this.getUIContext().getRouter().pushUrl({
+                  auth.checkAuth({
                     url: 'pages/QuestionDetailPage',
                     params: {
                       id: item.id

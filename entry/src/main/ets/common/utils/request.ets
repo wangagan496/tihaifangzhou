@@ -1,7 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from '@ohos/axios'
-import { ILoginDta } from '../../models/AccountModel'
 import { contextManager } from './ContextManager'
-import { promptAction, PromptAction } from '@kit.ArkUI'
+import { auth } from './Auth'
 
 
 // 创建 axios 实例，配置基础请求地址
@@ -13,7 +12,7 @@ export const instance = axios.create({
 // 请求拦截器：在请求发送前统一处理
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // 从全局存储获取用户信息（包含 token）
-  const user = AppStorage.get('user') as ILoginDta
+  const user = auth.getUser()
   if (user?.token) {
     // 如果存在 token，添加到请求头用于身份验证
     config.headers.Authorization = `Bearer ${user?.token}`
@@ -43,7 +42,7 @@ instance.interceptors.response.use(
     // 401 状态码表示 token 过期或无效
     if (err.response?.status === 401) {
       // 清除本地存储的用户信息
-      AppStorage.set('user', null)
+      auth.removeUser()
       // 跳转到登录页面
       contextManager.getUiCtx()?.getRouter().replaceUrl({
         url: 'pages/LoginPage'

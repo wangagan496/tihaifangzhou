@@ -1,7 +1,8 @@
-import { TgClockIn } from "../../common/components/TgClockIn"
-import { TgSearch } from "../../common/components/TgSearch"
-import { HomeCategoryComp } from "./HomeCategoryComp"
-import { scanBarcode } from "@kit.ScanKit"
+import { TgClockIn } from '../../common/components/TgClockIn'
+import { TgSearch } from '../../common/components/TgSearch'
+import { HomeCategoryComp } from './HomeCategoryComp'
+import { scanBarcode } from '@kit.ScanKit'
+import { auth } from '../../common/utils/Auth'
 
 
 @Component
@@ -13,7 +14,7 @@ export default struct Home {
     if (canIUse('SystemCapability.Multimedia.Scan.ScanBarcode')) {
       scanBarcode.startScanForResult(this.getUIContext().getHostContext(), (err, res) => {
         if (res) {
-          this.getUIContext().getRouter().pushUrl({
+          auth.checkAuth({
             url: 'pages/QuestionDetailPage',
             params: {
               id: res.originalValue

@@ -1,7 +1,8 @@
-import { AxiosResponse } from "@ohos/axios"
-import { ILoginDta, ILoginRes } from "../../models/AccountModel"
-import { IClockData, IClockRes } from "../../models/HomeModels"
-import { instance, request } from "../utils/request"
+import { ILoginDta } from '../../models/AccountModel'
+import { IClockData } from '../../models/HomeModels'
+import { request } from '../utils/request'
+import { promptAction } from '@kit.ArkUI'
+import { auth } from '../utils/Auth'
 
 @Component
 export struct TgClockIn {
@@ -9,22 +10,25 @@ export struct TgClockIn {
   @Prop
   clockCount: number = 0
 
-  async onClock() {
-    // try {
-    //   const res: AxiosResponse<IClockRes> =
-    //     await request<IClockData>({
-    //       url: '/hm/clockinInfo'
-    //     })
-    //   if (res.data.code === 10000) {
-    //     this.clockCount = res.data.data.clockinNumbers
-    //   }
-    // } catch (e) {
-    //   console.log(JSON.stringify(e))
-    // }
+  aboutToAppear(): void {
+    const user = auth.getUser()
+    if (user?.token) {
+      this.getData()
+    }
+  }
 
+  async getData() {
     const res = await request<IClockData>({ url: '/hm/clockinInfo' })
     this.clockCount = res.clockinNumbers
 
+  }
+
+  async onClock() {
+    await request({ url: '/hm/clockin', method: 'POST' })
+    promptAction.openToast({ message: '打卡成功' })
+      .then(() => {
+        this.getData()
+      })
   }
 
   build() {
@@ -45,7 +49,7 @@ export struct TgClockIn {
         }
         .width('50')
         .onClick(() => {
-          this.getUIContext().getRouter().pushUrl({
+          auth.checkAuth({
             url: 'pages/ClockPage'
           })
         })
@@ -58,7 +62,17 @@ export struct TgClockIn {
           .fontColor('#333C4F')
           .margin({ bottom: (4) })
           .onClick(() => {
-            this.onClock()
+            // 1、判断有没有登录
+            // 2、获取打卡信息
+            // 3、登录情况下，打卡，未登录情况，跳转登录
+            if (!this.user.token) {
+              auth.checkAuth({
+                url: 'pages/ClockPage'
+              })
+
+            } else {
+              this.onClock()
+            }
           })
       }
     }
