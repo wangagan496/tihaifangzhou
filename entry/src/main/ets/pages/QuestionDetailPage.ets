@@ -1,4 +1,5 @@
 import { IvSkeleton } from "../common/components/IvSkeleton"
+import { QuestionShareDialog } from "../common/components/QuestionShareDialog"
 import { TgLoadingDialog } from "../common/components/TgLoadingDialog"
 import { request } from "../common/utils/request"
 import { TgTag } from "../views/home/TgTag"
@@ -179,6 +180,13 @@ export struct QuestionDetailPage {
     }.width('100%').justifyContent(FlexAlign.SpaceAround)
   }
 
+  dialog = new CustomDialogController({
+    builder: QuestionShareDialog({
+      item: this.question,
+    }),
+    customStyle: true,
+  })
+
   build() {
     Navigation() {
       Flex({ direction: FlexDirection.Column }) {
@@ -230,7 +238,7 @@ export struct QuestionDetailPage {
                       {
                         value: '试题分享',
                         action: () => {
-
+                          this.dialog.open()
                         }
                       }
                     ])

@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from '@ohos/axios'
 import { ILoginDta } from '../../models/AccountModel'
 import { contextManager } from './ContextManager'
+import { promptAction, PromptAction } from '@kit.ArkUI'
 
 
 // 创建 axios 实例，配置基础请求地址

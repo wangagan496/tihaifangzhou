@@ -45,7 +45,7 @@ export struct QuestionFilterComp {
           .textAlign(TextAlign.Center)
         Text('完成')
           .fontSize(14)
-          .fontColor($r('app.color.common_main_color'))
+          .fontColor($r('app.color.common_blue'))
           .onClick(() => {
             // 调用父组件中的回调函数
             this.onSubmit(this.params)

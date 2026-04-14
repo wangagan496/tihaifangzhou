@@ -12,7 +12,7 @@ export struct TgTag {
     if (this.difficulty === 3 || this.difficulty === 4) {
       return { text: '一般', color: $r('app.color.common_blue') }
     } else if (this.difficulty === 5) {
-      return { text: '困难', color: $r('app.color.common_main_color') }
+      return { text: '困难', color: $r('app.color.common_blue') }
     }
     return { text: this.text ? this.text : '简单', color: $r('app.color.common_green') }
   }

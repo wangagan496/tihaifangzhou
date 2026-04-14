@@ -4,6 +4,7 @@
     "pages/LoginPage",
     "pages/ClockPage",
     "pages/RichTextPage",
-    "pages/QuestionDetailPage"
+    "pages/QuestionDetailPage",
+    "pages/TestPage01"
   ]
 }
