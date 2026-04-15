@@ -1,8 +1,8 @@
-import { IvSkeleton } from "../common/components/IvSkeleton"
-import { QuestionShareDialog } from "../common/components/QuestionShareDialog"
-import { TgLoadingDialog } from "../common/components/TgLoadingDialog"
-import { request } from "../common/utils/request"
-import { TgTag } from "../views/home/TgTag"
+import { IvSkeleton } from '../common/components/IvSkeleton'
+import { QuestionShareDialog } from '../common/components/QuestionShareDialog'
+import { TgLoadingDialog } from '../common/components/TgLoadingDialog'
+import { tgRequest } from '../common/utils/request'
+import { TgTag } from '../views/home/TgTag'
 
 export interface QuestionDetail {
   id: string
@@ -75,7 +75,7 @@ export struct QuestionDetailPage {
     this.loadingController.open()
 
     try {
-      const result = await request<QuestionDetail>({ url: `/hm/question/${this.questionId}` })
+      const result = await tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` })
       this.question = result
       this.isLoading = false
 
@@ -131,7 +131,7 @@ export struct QuestionDetailPage {
   }
 
   async opt(flag: 1 | 0, optType: 1 | 2) {
-    await request<null, IBodyData>({
+    await tgRequest<null, IBodyData>({
       url: flag === 1 ? 'hm/question/opt' : 'hm/question/unOpt',
       method: 'POST',
       data: {

@@ -77,7 +77,7 @@ export interface IRes<T> {
 
 // 封装的请求函数：简化 API 调用，自动处理类型和响应数据
 // T: 响应数据的类型，D: 请求数据的类型
-export async function request<T = null, D = null>(config: AxiosRequestConfig) {
+export async function tgRequest<T = null, D = null>(config: AxiosRequestConfig) {
   // 发送请求并获取响应
   const res: AxiosResponse<IRes<T>> = await instance<null, AxiosResponse<IRes<T>>, D>(config)
   // 直接返回业务数据部分（res.data.data）

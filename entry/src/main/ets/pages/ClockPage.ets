@@ -1,5 +1,5 @@
 import { HmCalendar, HmCalendarSelectedDay } from '@ohmos/calendar'
-import { request } from '../common/utils/request'
+import { tgRequest } from '../common/utils/request'
 import { IClockData } from '../models/HomeModels'
 
 @Entry
@@ -23,7 +23,7 @@ export struct ClockPage {
       year = date.split('-')[0]
       month = date.split('-')[1]
     }
-    const res = await request<IClockData>({
+    const res = await tgRequest<IClockData>({
       url: "/hm/clockinInfo", params: {
         year,
         month

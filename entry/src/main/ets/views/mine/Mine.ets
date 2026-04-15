@@ -55,6 +55,7 @@ export default struct Mine {
                 .fillColor($r('app.color.ih_gray_color'))
             }.onClick(() => {
               //todo: 跳转到个人信息页面
+              auth.checkAuth({ url: 'pages/ProfileEditPage' })
             })
             .width('100%')
 

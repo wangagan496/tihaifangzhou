@@ -1,6 +1,6 @@
 import { ILoginDta } from '../../models/AccountModel'
 import { IClockData } from '../../models/HomeModels'
-import { request } from '../utils/request'
+import { tgRequest } from '../utils/request'
 import { promptAction } from '@kit.ArkUI'
 import { auth } from '../utils/Auth'
 
@@ -18,13 +18,13 @@ export struct TgClockIn {
   }
 
   async getData() {
-    const res = await request<IClockData>({ url: '/hm/clockinInfo' })
+    const res = await tgRequest<IClockData>({ url: '/hm/clockinInfo' })
     this.clockCount = res.clockinNumbers
 
   }
 
   async onClock() {
-    await request({ url: '/hm/clockin', method: 'POST' })
+    await tgRequest({ url: '/hm/clockin', method: 'POST' })
     promptAction.openToast({ message: '打卡成功' })
       .then(() => {
         this.getData()

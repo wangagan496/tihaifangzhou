@@ -1,7 +1,8 @@
 import { auth } from '../common/utils/Auth'
-import { request } from '../common/utils/request'
+import { tgRequest } from '../common/utils/request'
 import { ILoginBody, ILoginDta } from '../models/AccountModel'
 import { router } from '@kit.ArkUI'
+import { contextManager } from '../common/utils/ContextManager'
 
 @Entry
 @Component
@@ -14,6 +15,8 @@ struct LoginPage {
   routerParams: router.RouterOptions | undefined = undefined
 
   aboutToAppear(): void {
+    contextManager.ctx = this.getUIContext().getHostContext()!
+    contextManager.UiCtx = this.getUIContext()
     const params = this.getUIContext().getRouter().getParams()
     if (params) {
       this.routerParams = params as router.RouterOptions
@@ -40,7 +43,7 @@ struct LoginPage {
       //     password: this.password
       //   })
 
-      const res = await request<ILoginDta, ILoginBody>({
+      const res = await tgRequest<ILoginDta, ILoginBody>({
         url: '/hm/login',
         method: 'POST',
         data: {

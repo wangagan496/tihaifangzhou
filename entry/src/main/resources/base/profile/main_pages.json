@@ -6,6 +6,7 @@
     "pages/RichTextPage",
     "pages/QuestionDetailPage",
     "pages/TestPage01",
-    "pages/SearchPage"
+    "pages/SearchPage",
+    "pages/ProfileEditPage"
   ]
 }

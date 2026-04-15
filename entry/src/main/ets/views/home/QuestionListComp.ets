@@ -1,5 +1,5 @@
 import { TgLoadingDialog } from '../../common/components/TgLoadingDialog'
-import { request } from '../../common/utils/request'
+import { tgRequest } from '../../common/utils/request'
 import { IListData } from '../../models/HomeModels'
 import { QuestionItem, QuestionItemComp } from './QuestionItemComp'
 import { FilterParams } from './QuestionFilterComp'
@@ -20,6 +20,8 @@ export struct QuestionListComp {
   @Watch('onFilterParamsChange')
   @Prop params: FilterParams
   selfIndex: number = 0
+  // 搜索参数
+  keyword: string = ''
 
   onFilterParamsChange() {
     this.loadData(false)
@@ -46,13 +48,14 @@ export struct QuestionListComp {
       this.page = 1
     }
     // 请求数据,共用内容
-    const res = await request<IListData>({
+    const res = await tgRequest<IListData>({
       url: '/hm/question/list',
       params: {
         type: this.typeId,
         questionBankType: 10,
         page: this.page,
         sort: this.params.sort,
+        keyword: this.keyword // 搜索参数
       }
     })
     this.totalPage = res.pageTotal

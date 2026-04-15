@@ -1,8 +1,8 @@
-import { IvSkeleton } from "../../common/components/IvSkeleton"
-import { request } from "../../common/utils/request"
-import { IQuestionType } from "../../models/CategoryModel"
-import { FilterParams, QuestionFilterComp } from "./QuestionFilterComp"
-import { QuestionListComp } from "./QuestionListComp"
+import { IvSkeleton } from '../../common/components/IvSkeleton'
+import { tgRequest } from '../../common/utils/request'
+import { IQuestionType } from '../../models/CategoryModel'
+import { FilterParams, QuestionFilterComp } from './QuestionFilterComp'
+import { QuestionListComp } from './QuestionListComp'
 
 @Component
 export struct HomeCategoryComp {
@@ -21,7 +21,7 @@ export struct HomeCategoryComp {
 
   async getTabBarData() {
     this.isLoading = true
-    const res = await request<IQuestionType[]>({ url: '/hm/question/type' })
+    const res = await tgRequest<IQuestionType[]>({ url: '/hm/question/type' })
     this.questionTypeList = res
     this.isLoading = false
   }
