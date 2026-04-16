@@ -57,7 +57,9 @@ struct LoginPage {
       // 3、延时0.5s跳转
       setTimeout(() => {
         if (this.routerParams) {
-          auth.checkAuth(this.routerParams, true)
+          this.getUIContext().getRouter().replaceUrl(this.routerParams)
+        } else {
+          this.getUIContext().getRouter().back()
         }
         // 4、显示提示
         this.getUIContext().getPromptAction().showToast({

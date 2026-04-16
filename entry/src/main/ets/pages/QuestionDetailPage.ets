@@ -3,6 +3,7 @@ import { QuestionShareDialog } from '../common/components/QuestionShareDialog'
 import { TgLoadingDialog } from '../common/components/TgLoadingDialog'
 import { tgRequest } from '../common/utils/request'
 import { TgTag } from '../views/home/TgTag'
+import { tracking } from '../common/utils/Tracking'
 
 export interface QuestionDetail {
   id: string
@@ -51,11 +52,20 @@ export struct QuestionDetailPage {
   @State
   isLoading: boolean = true
 
+  // 1、变量保存收集的时间点，id
+  // 2、数据请求成功，保存时间点，id
+  // 3、退出界面，保存时间点
+
   aboutToAppear(): void {
     const params = this.getUIContext().getRouter().getParams() as ParamsType
     if (params) {
       this.getData(params.id)
     }
+  }
+
+  aboutToDisappear(): void {
+
+    tracking.save()
   }
 
   // 1、自定义的加载弹窗，实现，使用ai完成
@@ -78,6 +88,7 @@ export struct QuestionDetailPage {
       const result = await tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` })
       this.question = result
       this.isLoading = false
+      tracking.start(this.questionId.toString())
 
     } catch (err) {
       this.getUIContext().getPromptAction().showToast({

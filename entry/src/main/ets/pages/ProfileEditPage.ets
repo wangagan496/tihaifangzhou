@@ -12,13 +12,15 @@ import image from '@ohos.multimedia.image'
 @Entry
 @Component
 struct ProfileEditPage {
-  @StorageProp('user') user: ILoginDta = {} as ILoginDta
+  @StorageLink('user') user: ILoginDta = {} as ILoginDta
   dialog: CustomDialogController = new CustomDialogController({
     builder: TgLoadingDialog({ message: '更新中...' }),
     customStyle: true,
     alignment: DialogAlignment.Center
   })
   @StorageProp('topHeight') topHeight: number = 0
+  // 用户昵称
+  @State nickName: string = this.user.nickName
 
   updateAvatar() {
     // 1、打开相册获取图片
@@ -115,7 +117,7 @@ struct ProfileEditPage {
           ListItem() {
             Row() {
               Text('昵称')
-              TextInput({ text: this.user.nickName })
+              TextInput({ text: $$this.nickName })
                 .fontColor($r('app.color.common_gray_03'))
                 .textAlign(TextAlign.End)
                 .layoutWeight(1)
@@ -123,9 +125,9 @@ struct ProfileEditPage {
                 .height(60)
                 .backgroundColor($r('app.color.white'))
                 .borderRadius(0)
-                .onChange((value) => this.user.nickName = value)
                 .onSubmit(() => {
                   // TODO 更新昵称
+                  this.updateNickname()
                 })
             }
             .width('100%')
@@ -144,6 +146,23 @@ struct ProfileEditPage {
       }
     }.titleMode(NavigationTitleMode.Mini).title('编辑资料')
     .padding({ top: this.topHeight })
+
+  }
+
+  // 未登录
+
+  async updateNickname() {
+    // 更新服务器端
+    await tgRequest({
+      url: '/hm/userInfo/profile',
+      method: 'POST',
+      data: {
+        nickName: this.nickName
+      }
+    })
+    // 更新客户端
+    this.user.nickName = this.nickName
+    promptAction.openToast({ message: '更新成功' })
 
   }
 }

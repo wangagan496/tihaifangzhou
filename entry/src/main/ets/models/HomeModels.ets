@@ -1,4 +1,4 @@
-import { QuestionItem } from "../views/home/QuestionItemComp";
+import { QuestionItem } from '../views/home/QuestionItemComp';
 
 export interface IClockRes {
   /**
@@ -61,13 +61,26 @@ export interface IListData {
    * 总页数
    */
   pageTotal: number;
+
   /**
    * 数据集合
    */
   rows: QuestionItem[];
+
   /**
    * 总数
    */
   total: number;
 }
 
+
+// 埋点相关
+export interface TimeItem {
+  questionId: string;
+  startTime: number;
+  endTime: number;
+}
+
+export interface TrackData {
+  timeList: TimeItem[];
+}

@@ -1,8 +1,9 @@
-import { router } from '@kit.ArkUI'
 import { TgClockIn } from '../../common/components/TgClockIn'
 import { auth } from '../../common/utils/Auth'
+import { tgRequest } from '../../common/utils/request'
 import { windowManager } from '../../common/utils/WindowManager'
 import { ILoginDta } from '../../models/AccountModel'
+import { StudyTimeData } from '../../pages/StudyTimePage'
 
 interface Nav {
   icon: ResourceStr
@@ -21,13 +22,37 @@ interface Tool {
 @Component
 export default struct Mine {
   @StorageProp('user') user: ILoginDta = {} as ILoginDta
+  @State totalTime: number = 0
 
   aboutToAppear(): void {
     windowManager.setStatusBarLight()
+    this.getData()
   }
 
   aboutToDisappear(): void {
     windowManager.setStatusBarDark()
+  }
+
+  // 获取数据
+  async getData() {
+    const res = await tgRequest<StudyTimeData>({ url: '/hm/studyInfo' })
+    this.totalTime = res.totalTime
+  }
+
+  // 3. 转数据为 时 分 秒
+  switchTime(second: number) {
+    //    >3600 小时
+    if (second >= 3600) {
+      return (second / 3600).toFixed(1) + '小时'
+    }
+
+    //   >60 <3600 分钟
+    if (second >= 60) {
+      return (second / 60).toFixed(1) + '分钟'
+    }
+    //   <60 秒
+    return second + '秒'
+
   }
 
   build() {
@@ -82,10 +107,10 @@ export default struct Mine {
         this.navBuilder({
           icon: $r('app.media.ic_mine_study'),
           name: '累计学时',
-          other: '4 小时'
+          other: this.switchTime(this.totalTime)
         ,
           onClick: () => {
-            router.pushUrl({ url: '跳转到学习记录页面' })
+            auth.checkAuth({ url: 'pages/StudyTimePage' })
           }
         })
       }
