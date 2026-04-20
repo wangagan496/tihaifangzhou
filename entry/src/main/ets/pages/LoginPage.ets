@@ -56,11 +56,7 @@ struct LoginPage {
       auth.setUser(res)
       // 3、延时0.5s跳转
       setTimeout(() => {
-        if (this.routerParams) {
-          this.getUIContext().getRouter().replaceUrl(this.routerParams)
-        } else {
-          this.getUIContext().getRouter().back()
-        }
+        auth.checkAuth({ url: 'pages/Index' })
         // 4、显示提示
         this.getUIContext().getPromptAction().showToast({
           message: '登录成功'

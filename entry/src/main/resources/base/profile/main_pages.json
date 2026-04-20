@@ -5,9 +5,11 @@
     "pages/ClockPage",
     "pages/RichTextPage",
     "pages/QuestionDetailPage",
-    "pages/TestPage01",
+    "pages/TestFile/TestPage01",
     "pages/SearchPage",
     "pages/ProfileEditPage",
-    "pages/StudyTimePage"
+    "pages/StudyTimePage",
+    "pages/WordPage",
+    "pages/TestFile/WebViewPage"
   ]
 }
