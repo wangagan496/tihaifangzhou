@@ -10,6 +10,8 @@
     "pages/ProfileEditPage",
     "pages/StudyTimePage",
     "pages/WordPage",
-    "pages/TestFile/WebViewPage"
+    "pages/TestFile/WebViewPage",
+    "pages/TestFile/PermissionsPage",
+    "pages/TestFile/AVRecorderPage"
   ]
 }

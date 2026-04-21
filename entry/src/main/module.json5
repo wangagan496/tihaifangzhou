@@ -2,7 +2,13 @@
   "module": {
     "requestPermissions": [{
       "name": "ohos.permission.INTERNET"
-    }],
+    },
+      {
+        "name": "ohos.permission.MICROPHONE",
+        "usedScene": {},
+        "reason": "$string:reason_record"
+      }
+    ],
     "name": "entry",
     "type": "entry",
     "description": "$string:module_desc",
