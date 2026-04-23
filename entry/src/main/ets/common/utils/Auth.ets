@@ -46,8 +46,8 @@ class Auth {
         contextManager.UiCtx?.getRouter().pushUrl({
           url: 'pages/LoginPage',
           params: {
-            url: options.url,
-            params: options.params
+            backUrl: options.url,
+            backParams: options.params
           }
         })
       })
@@ -57,3 +57,8 @@ class Auth {
 
 // 创建Auth实例
 export const auth = new Auth();
+
+export interface IRouterBackParams {
+  backUrl: string,
+  backParams: object | undefined
+}

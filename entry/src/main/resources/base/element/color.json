@@ -67,6 +67,10 @@
     {
       "name": "bg_white",
       "value": "#80E7E5E5"
+    },
+    {
+      "name": "black",
+      "value": "#000000"
     }
   ]
 }

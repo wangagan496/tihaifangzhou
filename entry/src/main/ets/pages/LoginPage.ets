@@ -1,4 +1,4 @@
-import { auth } from '../common/utils/Auth'
+import { auth, IRouterBackParams } from '../common/utils/Auth'
 import { tgRequest } from '../common/utils/request'
 import { ILoginBody, ILoginDta } from '../models/AccountModel'
 import { router } from '@kit.ArkUI'
@@ -51,17 +51,21 @@ struct LoginPage {
           password: this.password
         }
       })
+      const params = this.getUIContext().getRouter().getParams() as IRouterBackParams
 
       // 2、保存用户信息
       auth.setUser(res)
-      // 3、延时0.5s跳转
-      setTimeout(() => {
-        auth.checkAuth({ url: 'pages/Index' })
-        // 4、显示提示
-        this.getUIContext().getPromptAction().showToast({
-          message: '登录成功'
-        })
-      }, 500)
+      if (!params) {
+        this.getUIContext().getRouter().replaceUrl({ url: 'pages/Index' })
+      } else {
+        // 4.5 如果有返回页, 回到返回页
+        this.getUIContext().getRouter().replaceUrl({ url: params.backUrl, params: params.backParams })
+      }
+      // 4、显示提示
+      this.getUIContext().getPromptAction().showToast({
+        message: '登录成功'
+      })
+
     } finally {
       this.isLoading = false
     }

@@ -33,7 +33,7 @@ struct Index {
         .aspectRatio(1)
       Text(text)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? $r('app.color.common_blue') : Color.Black)
+        .fontColor(this.currentIndex === index ? $r('app.color.common_blue') : $r('app.color.black'))
     }
   }
 

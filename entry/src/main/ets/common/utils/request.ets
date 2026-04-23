@@ -51,11 +51,13 @@ instance.interceptors.response.use(
       contextManager.getUiCtx()?.getPromptAction().showToast({
         message: '登录已过期，请重新登录'
       })
+    } else {
+      // 显示其他错误信息
+      contextManager.getUiCtx()?.getPromptAction().showToast({
+        message: err.message
+      })
     }
-    // 显示其他错误信息
-    contextManager.getUiCtx()?.getPromptAction().showToast({
-      message: err.message
-    })
+
     return Promise.reject(err)
   })
 

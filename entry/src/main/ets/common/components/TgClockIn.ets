@@ -69,7 +69,6 @@ export struct TgClockIn {
               auth.checkAuth({
                 url: 'pages/ClockPage'
               })
-
             } else {
               this.onClock()
             }

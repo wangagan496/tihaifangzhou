@@ -12,6 +12,9 @@
     "pages/WordPage",
     "pages/TestFile/WebViewPage",
     "pages/TestFile/PermissionsPage",
-    "pages/TestFile/AVRecorderPage"
+    "pages/TestFile/AVRecorderPage",
+    "pages/AudioPage",
+    "pages/SettingsPage",
+    "pages/TestFile/ColorModePage"
   ]
 }

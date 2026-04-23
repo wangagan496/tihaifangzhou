@@ -114,7 +114,7 @@ export default struct Mine {
           }
         })
       }
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.white'))
       .padding(16)
       .borderRadius(8)
 
@@ -126,13 +126,26 @@ export default struct Mine {
             })
           }
         })
-        this.toolsBuilder({ icon: $r('app.media.ic_mine_ai'), name: '面试录音' })
+        this.toolsBuilder({
+          icon: $r('app.media.ic_mine_ai'), name: '面试录音', onClick: () => {
+            auth.checkAuth({
+              url: 'pages/AudioPage'
+            })
+          }
+        })
         this.toolsBuilder({ icon: $r('app.media.ic_mine_invite'), name: '推荐分享' })
         this.toolsBuilder({ icon: $r('app.media.ic_mine_file'), name: '意见反馈' })
         this.toolsBuilder({ icon: $r('app.media.ic_mine_info'), name: '关于我们' })
-        this.toolsBuilder({ icon: $r('app.media.ic_mine_setting'), name: '设置' })
+        this.toolsBuilder({
+          icon: $r('app.media.ic_mine_setting'), name: '设置',
+          onClick: () => {
+            auth.checkAuth({
+              url: 'pages/SettingsPage'
+            })
+          }
+        })
       }
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.white'))
       .borderRadius(8)
 
     }
@@ -184,6 +197,7 @@ export default struct Mine {
         .margin({ right: 12 })
       Text(tool.name)
         .fontSize(14)
+        .fontColor($r('app.color.common_gray_03'))
       Blank()
       if (tool.value) {
         Text(tool.value)
