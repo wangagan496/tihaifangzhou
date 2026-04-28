@@ -1,6 +1,8 @@
 import { auth } from '../common/utils/Auth';
 import { SettingsThemeDialog } from '../views/SettingsPage/SettingsThemeDialog';
-import { ConfigurationConstant } from '@kit.AbilityKit';
+import { bundleManager, ConfigurationConstant } from '@kit.AbilityKit';
+import { fileIo, storageStatistics } from '@kit.CoreFileKit';
+import { promptAction } from '@kit.ArkUI';
 
 export interface Tool {
   icon?: ResourceStr
@@ -21,6 +23,51 @@ struct SettingsPage {
     customStyle: true,
     alignment: DialogAlignment.Bottom
   })
+  @State cache: string = '0MB'
+  @State version: string = '1.0.0'
+
+  async getVersion() {
+    const bundleInfo =
+      await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
+    this.version = 'v' + bundleInfo.versionName
+  }
+
+  // 获取缓存大小
+  getCache() {
+    storageStatistics.getCurrentBundleStats().then((res) => {
+      // 缓存大小,单位为字节  bt  kb  mb gb
+      // 单位转换，时间转换，逻辑处理 ，ai完成可以提高效率
+      const cacheSizeInMB = (res.cacheSize / (1024 * 1024)).toFixed(2);
+      this.cache = `${cacheSizeInMB}MB`;
+    })
+  }
+
+  // 清除缓存
+  clearCache() {
+    let ctx = AppStorage.get<Context>('context')
+    if (!ctx) {
+      return
+    }
+    const cacheDir = ctx.cacheDir
+    if (fileIo.accessSync(cacheDir)) {
+      fileIo.rmdirSync(cacheDir)
+    }
+
+    const appDir = ctx.getApplicationContext().cacheDir
+    if (fileIo.accessSync(appDir)) {
+      fileIo.rmdirSync(appDir)
+    }
+
+    promptAction.openToast({ message: '清除成功' })
+    this.getCache()
+
+
+  }
+
+  aboutToAppear(): void {
+    this.getCache()
+    this.getVersion()
+  }
 
   build() {
     Navigation() {
@@ -48,11 +95,13 @@ struct SettingsPage {
           }
         })
         this.toolsBuilder({
-          name: '清除应用缓存', value: '10MB', onClick: () => {
+          name: '清除应用缓存', value: this.cache, onClick: () => {
             // TODO 清除缓存
+            this.clearCache()
+
           }
         })
-        this.toolsBuilder({ name: '当前版本', value: '1.0.0', radius: 2 })
+        this.toolsBuilder({ name: '当前版本', value: this.version, radius: 2 })
         Blank()
           .height(15)
         Text('退出账号')
