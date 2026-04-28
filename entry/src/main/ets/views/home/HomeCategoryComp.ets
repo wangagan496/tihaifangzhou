@@ -14,6 +14,7 @@ export struct HomeCategoryComp {
     index: this.index
   }
   @State isLoading: boolean = false
+  @StorageProp('isDark') isDark: boolean = false
 
   aboutToAppear(): void {
     this.getTabBarData()
@@ -33,7 +34,8 @@ export struct HomeCategoryComp {
         Text(q.name)
           .fontSize(15)
           .height(43)
-          .fontColor(this.index === index ? Color.Black : Color.Gray)
+          .fontColor(this.index === index ? (this.isDark ? Color.White : Color.Black) :
+            Color.Gray)
         Text()
           .width(this.index === index ? 20 : 0)
           .height(2)

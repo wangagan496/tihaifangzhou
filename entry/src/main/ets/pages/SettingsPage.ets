@@ -1,5 +1,6 @@
 import { auth } from '../common/utils/Auth';
 import { SettingsThemeDialog } from '../views/SettingsPage/SettingsThemeDialog';
+import { ConfigurationConstant } from '@kit.AbilityKit';
 
 export interface Tool {
   icon?: ResourceStr
@@ -12,6 +13,8 @@ export interface Tool {
 @Entry
 @Component
 struct SettingsPage {
+  @StorageProp('COLOR_MODE') colorMode: ConfigurationConstant.ColorMode =
+    ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET
   @StorageProp('topHeight') topHeight: number = 0
   dialog = new CustomDialogController({
     builder: SettingsThemeDialog(),
@@ -37,7 +40,7 @@ struct SettingsPage {
         this.toolsBuilder({ name: '消息推送', radius: 1 })
         this.toolsBuilder({
           name: '深色模式',
-          value: '已关闭',
+          value: this.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK ? '已开启' : '已关闭',
           radius: 1,
           onClick: () => {
             // TODO 设置主题

@@ -34,6 +34,7 @@ export struct WordPage {
     customStyle: true,
     alignment: DialogAlignment.Center
   })
+  @StorageProp('isDark') isDark: boolean = false
 
   aboutToAppear(): void {
     this.getWords()
@@ -102,6 +103,8 @@ export struct WordPage {
         .onPageEnd(() => {
           this.controller.runJavaScript(`writeCode(\`${this.currentCode}\`)`)
         })
+        .darkMode(this.isDark ? WebDarkMode.On : WebDarkMode.Off)
+        .forceDarkAccess(this.isDark)
     }
     .padding({
       left: 16,
