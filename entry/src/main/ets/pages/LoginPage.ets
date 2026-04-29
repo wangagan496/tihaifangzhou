@@ -114,6 +114,11 @@ struct LoginPage {
           Text('用户协议')
             .fontSize(14)
             .padding({ right: 4 })
+            .onClick(() => {
+              this.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPage' ,params:{
+                sign:'local'
+              }})
+             })
           Text('和')
             .fontSize(14)
             .fontColor($r('app.color.ih_gray_color'))
@@ -122,6 +127,9 @@ struct LoginPage {
             .fontSize(14)
             .onClick(() => {
               // todo: 跳转至隐私协议
+              this.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPage',params:{
+                sign:'online'
+              } })
             })
         }
         .width('90%')

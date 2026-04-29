@@ -15,6 +15,7 @@
     "pages/TestFile/AVRecorderPage",
     "pages/AudioPage",
     "pages/SettingsPage",
-    "pages/TestFile/ColorModePage"
+    "pages/TestFile/ColorModePage",
+    "pages/PrivacyPage"
   ]
 }
