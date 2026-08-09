@@ -15,7 +15,7 @@ export struct QuestionListComp {
   page: number = 0
   totalPage: number = 1
   // 请求中
-  isRequesting: boolean = false
+  @State isRequesting: boolean = false
   // 监听参数变化
   @Watch('onFilterParamsChange')
   @Prop params: FilterParams
@@ -30,48 +30,53 @@ export struct QuestionListComp {
   // 1、给列表传递selfIndex
   // 2、比较selfIndex和params.index，如果相同则加载数据
 
-  async loadData(isLoadMore: boolean) {
+  loadData(isLoadMore: boolean): Promise<void> {
     if (this.selfIndex !== this.params.index) {
-      return
+      return Promise.resolve()
+    }
+    if (this.isRequesting) {
+      return Promise.resolve()
     }
 
     if (isLoadMore) {
       // 加载更多
       if (this.page >= this.totalPage) {
-        this.isRequesting = false
-        return
+        return Promise.resolve()
       }
-      this.page++
-      this.dialog.open()
-    } else {
-      // 刷新
-      this.page = 1
     }
-    // 请求数据,共用内容
-    const res = await tgRequest<IListData>({
-      url: '/hm/question/list',
-      params: {
-        type: this.typeId,
-        questionBankType: 10,
-        page: this.page,
-        sort: this.params.sort,
-        keyword: this.keyword // 搜索参数
+
+    this.isRequesting = true
+    const nextPage = isLoadMore ? this.page + 1 : 1
+    if (isLoadMore) {
+      this.dialog.open()
+    }
+    return tgRequest<IListData>({
+        url: '/hm/question/list',
+        params: {
+          type: this.typeId,
+          questionBankType: 10,
+          page: nextPage,
+          sort: this.params.sort,
+          keyword: this.keyword
+        }
+      }).then((res): void => {
+      this.page = nextPage
+      this.totalPage = res.pageTotal
+      this.list = isLoadMore ? this.list.concat(res.rows) : res.rows
+      AppStorage.setOrCreate('idList', this.list.map(item => item.id))
+      this.isRequesting = false
+      this.refreshing = false
+      if (isLoadMore) {
+        this.dialog.close()
+      }
+    }, (): void => {
+      this.getUIContext().getPromptAction().showToast({ message: '题目加载失败，请稍后重试' })
+      this.isRequesting = false
+      this.refreshing = false
+      if (isLoadMore) {
+        this.dialog.close()
       }
     })
-    this.totalPage = res.pageTotal
-
-    if (isLoadMore) {
-      // 加载更多
-      this.list.push(...res.rows)
-      this.isRequesting = false
-      this.dialog.close()
-    } else {
-      // 刷新
-      this.list = res.rows
-      this.refreshing = false
-    }
-
-    AppStorage.setOrCreate('idList', this.list.map(item => item.id))
   }
 
   // 自定义弹窗
@@ -107,9 +112,9 @@ export struct QuestionListComp {
           }
         })
       }.layoutWeight(1)
-      .onRefreshing(() => {
-        this.loadData(false)
-      })
+        .onRefreshing(() => {
+          this.loadData(false)
+        })
 
     }
     .justifyContent(FlexAlign.Start)

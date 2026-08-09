@@ -17,18 +17,21 @@ export struct TgClockIn {
     }
   }
 
-  async getData() {
-    const res = await tgRequest<IClockData>({ url: '/hm/clockinInfo' })
-    this.clockCount = res.clockinNumbers
-
+  getData(): Promise<void> {
+    return tgRequest<IClockData>({ url: '/hm/clockinInfo' }).then((res): void => {
+      this.clockCount = res.clockinNumbers
+    }, (): void => {
+      this.clockCount = 0
+    })
   }
 
-  async onClock() {
-    await tgRequest({ url: '/hm/clockin', method: 'POST' })
-    promptAction.openToast({ message: '打卡成功' })
-      .then(() => {
-        this.getData()
-      })
+  onClock(): Promise<void> {
+    return tgRequest({ url: '/hm/clockin', method: 'POST' }).then((): Promise<void> => {
+      this.getUIContext().getPromptAction().showToast({ message: '打卡成功' })
+      return this.getData()
+    }, (): void => {
+      this.getUIContext().getPromptAction().showToast({ message: '打卡失败，请稍后重试' })
+    })
   }
 
   build() {

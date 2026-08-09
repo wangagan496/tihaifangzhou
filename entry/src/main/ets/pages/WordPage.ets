@@ -43,14 +43,28 @@ export struct WordPage {
   // 1、跳转到单词页面
   // 2、读取word.json中的单词
   // 3、使用Object.keys获取key值数组，渲染
-  async getWords() {
-    // 读取单词
-    const ctx = this.getUIContext().getHostContext()!
-    const mgr = ctx.resourceManager
-    const res = await mgr.getRawFileContent('word.json')
-    // 将结果转成字符串
-    const decoder = new util.TextDecoder()
-    this.words = JSON.parse(decoder.decodeToString(res))
+  getWords(): void {
+    this.loading = true
+    const ctx = this.getUIContext().getHostContext()
+    if (!ctx) {
+      this.loading = false
+      this.words = {}
+      return
+    }
+    ctx.resourceManager.getRawFileContent('word.json').then((res): void => {
+      const decoded = new util.TextDecoder().decodeToString(res)
+      const data = JSON.parse(decoded) as Record<string, WordItem[]>
+      this.words = data
+      const categories = Object.keys(data)
+      if (!data[this.currentType] && categories.length > 0) {
+        this.currentType = categories[0]
+      }
+      this.loading = false
+    }, (): void => {
+      this.words = {}
+      this.loading = false
+      this.getUIContext().getPromptAction().showToast({ message: '单词数据加载失败' })
+    })
   }
 
   // 单词分类弹窗
@@ -101,7 +115,7 @@ export struct WordPage {
         controller: this.controller
       })
         .onPageEnd(() => {
-          this.controller.runJavaScript(`writeCode(\`${this.currentCode}\`)`)
+          this.controller.runJavaScript(`writeCode(${JSON.stringify(this.currentCode)})`)
         })
         .darkMode(this.isDark ? WebDarkMode.On : WebDarkMode.Off)
         .forceDarkAccess(this.isDark)
@@ -151,7 +165,7 @@ export struct WordPage {
           .color($r('app.color.common_gray_bg'))
 
         List({ scroller: this.scroller }) {
-          ForEach(this.words[this.currentType], (wordItem: WordItem) => {
+          ForEach(this.words[this.currentType] || [], (wordItem: WordItem) => {
 
             ListItem() {
               Row({ space: 6 }) {

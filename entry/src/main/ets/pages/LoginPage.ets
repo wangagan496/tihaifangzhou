@@ -7,10 +7,9 @@ import { contextManager } from '../common/utils/ContextManager'
 @Entry
 @Component
 struct LoginPage {
-  @State username: string = 'hmheima'
-  @State password: string = 'Hmheima%123'
+  @State username: string = ''
+  @State password: string = ''
   @State isAgree: boolean = false
-  //
   @State isLoading: boolean = false
   routerParams: router.RouterOptions | undefined = undefined
 
@@ -23,149 +22,79 @@ struct LoginPage {
     }
   }
 
-  async login() {
-    if (this.username === '' || this.password === '') {
-      return this.getUIContext().getPromptAction().showToast({
-        message: '请填写用户名或密码'
-      })
+  login(): void {
+    const username = this.username.trim()
+    const password = this.password
+    if (!username || !password) {
+      this.showToast('请填写用户名和密码')
+      return
     }
     if (!this.isAgree) {
-      return this.getUIContext().getPromptAction().showToast({
-        message: '请先阅读并同意用户协议和隐私政策'
-      })
+      this.showToast('请先阅读并同意用户协议和隐私政策')
+      return
     }
-    try {
-      // 5、加载组件的显示隐藏
-      this.isLoading = true
-      // const res: AxiosResponse<ILoginRes> =
-      //   await instance.post<null, AxiosResponse<ILoginRes>, ILoginBody>('/hm/login', {
-      //     username: this.username,
-      //     password: this.password
-      //   })
 
-      const res = await tgRequest<ILoginDta, ILoginBody>({
-        url: '/hm/login',
-        method: 'POST',
-        data: {
-          username: this.username,
-          password: this.password
-        }
-      })
+    this.isLoading = true
+    tgRequest<ILoginDta, ILoginBody>({
+      url: '/hm/login',
+      method: 'POST',
+      data: { username, password }
+    }).then((user) => {
+      auth.setUser(user)
       const params = this.getUIContext().getRouter().getParams() as IRouterBackParams
-
-      // 2、保存用户信息
-      auth.setUser(res)
-      if (!params) {
-        this.getUIContext().getRouter().replaceUrl({ url: 'pages/Index' })
-      } else {
-        // 4.5 如果有返回页, 回到返回页
-        this.getUIContext().getRouter().replaceUrl({ url: params.backUrl, params: params.backParams })
-      }
-      // 4、显示提示
-      this.getUIContext().getPromptAction().showToast({
-        message: '登录成功'
+      const navigation = params
+        ? this.getUIContext().getRouter().replaceUrl({ url: params.backUrl, params: params.backParams })
+        : this.getUIContext().getRouter().replaceUrl({ url: 'pages/Index' })
+      navigation.then(() => {
+        this.isLoading = false
+        this.showToast('登录成功')
+      }, () => {
+        this.isLoading = false
+        this.showToast('页面跳转失败，请重试')
       })
-
-    } finally {
+    }, () => {
       this.isLoading = false
-    }
+      this.showToast('登录失败，请检查网络或账号信息')
+    })
+  }
+
+  private showToast(message: string): void {
+    this.getUIContext().getPromptAction().showToast({ message })
   }
 
   build() {
     Column() {
-      // logo
       Column({ space: 10 }) {
-        Image($r('app.media.icon'))
-          .height(55)
-          .aspectRatio(1)
+        Image($r('app.media.icon')).height(55).aspectRatio(1)
+        Text('刷题宝').fontSize(28).fontColor('#121826')
+        Text('搞定学习难题，就用刷题宝').fontSize(14).fontColor('#6F6F6F')
+      }.margin({ top: 170 })
 
-        Text('刷题宝')
-          .fontSize(28)
-          .fontColor('#121826')
-
-        Text('搞定学习难题，就用刷题宝')
-          .fontSize(14)
-          .fontColor('#6F6F6F')
-      }
-      .margin({ top: 170 })
-
-      //  登录区域
       Column({ space: 20 }) {
-
-        TextInput({ text: $$this.username })
-          .backgroundColor(Color.White)
-          .width('90%')
-          .borderRadius(0)
-
-        TextInput({ text: $$this.password })
-          .type(InputType.Password)
-          .backgroundColor(Color.White)
-          .width('90%')
-
+        TextInput({ text: $$this.username }).backgroundColor(Color.White).width('90%').borderRadius(0)
+        TextInput({ text: $$this.password }).type(InputType.Password).backgroundColor(Color.White).width('90%')
         Row() {
-          Checkbox()
-            .select($$this.isAgree)
-            .selectedColor('#3a9bfc')
-
-          Text('已阅读并同意')
-            .fontSize(14)
-            .fontColor($r('app.color.ih_gray_color'))
-            .padding({ right: 4 })
-          Text('用户协议')
-            .fontSize(14)
-            .padding({ right: 4 })
-            .onClick(() => {
-              this.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPage' ,params:{
-                sign:'local'
-              }})
-             })
-          Text('和')
-            .fontSize(14)
-            .fontColor($r('app.color.ih_gray_color'))
-            .padding({ right: 4 })
-          Text('隐私政策')
-            .fontSize(14)
-            .onClick(() => {
-              // todo: 跳转至隐私协议
-              this.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPage',params:{
-                sign:'online'
-              } })
-            })
-        }
-        .width('90%')
-
+          Checkbox().select($$this.isAgree).selectedColor('#3a9bfc')
+          Text('已阅读并同意').fontSize(14).fontColor($r('app.color.ih_gray_color')).padding({ right: 4 })
+          Text('用户协议').fontSize(14).padding({ right: 4 }).onClick(() => {
+            this.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPage', params: { sign: 'local' } })
+          })
+          Text('和').fontSize(14).fontColor($r('app.color.ih_gray_color')).padding({ right: 4 })
+          Text('隐私政策').fontSize(14).onClick(() => {
+            this.getUIContext().getRouter().pushUrl({ url: 'pages/PrivacyPage', params: { sign: 'online' } })
+          })
+        }.width('90%')
         Button() {
           Row() {
             if (this.isLoading) {
-              LoadingProgress()
-                .height(28)
-                .aspectRatio(1)
-                .color(Color.White)
+              LoadingProgress().height(28).aspectRatio(1).color(Color.White)
             }
-
             Text('登录')
           }
-        }
-        .onClick(() => {
-          this.login()
-        })
-        .borderRadius(4)
-        .width(328)
-        .height(45)
-        .fontColor(Color.White)
-        .linearGradient({
-          angle: 135,
-          colors: [
-            ['#3a9bfa', 0],
-            ['#3a9bfc', 1]
-          ]
-        })
-
-      }
-      .margin({ top: 50 })
-
-    }
-    .width('100%')
-    .height('100%')
+        }.onClick(() => { this.login() })
+          .borderRadius(4).width(328).height(45).fontColor(Color.White)
+          .linearGradient({ angle: 135, colors: [['#3a9bfa', 0], ['#3a9bfc', 1]] })
+      }.margin({ top: 50 })
+    }.width('100%').height('100%')
   }
 }

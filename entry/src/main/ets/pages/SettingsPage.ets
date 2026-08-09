@@ -26,24 +26,28 @@ struct SettingsPage {
   @State cache: string = '0MB'
   @State version: string = '1.0.0'
 
-  async getVersion() {
-    const bundleInfo =
-      await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
-    this.version = 'v' + bundleInfo.versionName
+  getVersion(): void {
+    bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION).then((bundleInfo): void => {
+      this.version = 'v' + bundleInfo.versionName
+    }, (): void => {
+      this.version = '未知版本'
+    })
   }
 
   // 获取缓存大小
-  getCache() {
-    storageStatistics.getCurrentBundleStats().then((res) => {
+  getCache(): void {
+    storageStatistics.getCurrentBundleStats().then((res): void => {
       // 缓存大小,单位为字节  bt  kb  mb gb
       // 单位转换，时间转换，逻辑处理 ，ai完成可以提高效率
       const cacheSizeInMB = (res.cacheSize / (1024 * 1024)).toFixed(2);
       this.cache = `${cacheSizeInMB}MB`;
+    }, (): void => {
+      this.cache = '未知'
     })
   }
 
   // 清除缓存
-  clearCache() {
+  clearCache(): void {
     let ctx = AppStorage.get<Context>('context')
     if (!ctx) {
       return
@@ -52,13 +56,7 @@ struct SettingsPage {
     if (fileIo.accessSync(cacheDir)) {
       fileIo.rmdirSync(cacheDir)
     }
-
-    const appDir = ctx.getApplicationContext().cacheDir
-    if (fileIo.accessSync(appDir)) {
-      fileIo.rmdirSync(appDir)
-    }
-
-    promptAction.openToast({ message: '清除成功' })
+    this.getUIContext().getPromptAction().showToast({ message: '清除成功' })
     this.getCache()
 
 

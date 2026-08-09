@@ -9,38 +9,36 @@ import { windowManager } from '../common/utils/WindowManager'
 struct AudioPage {
   permissions: Permissions[] = ['ohos.permission.MICROPHONE']
   confirmConfig: promptAction.ShowDialogOptions = {
-    title: "温馨提示",
-    message: "未授权使用麦克风将无法使用该面试录音功能，是否前往设置进行授权？",
+    title: '温馨提示',
+    message: '未授权使用麦克风将无法使用面试录音功能，是否前往设置进行授权？',
     buttons: [
       { text: '离开', color: $r('app.color.common_gray_01') },
       { text: '去授权', color: $r('app.color.common_blue') }
     ]
   }
 
-  async getPermission() {
-    try {
-      // 第一请求授权
-      const isOk = await permission.requestPermissions(this.permissions)
-      if (isOk) {
+  getPermission(): void {
+    permission.requestPermissions(this.permissions).then((isGranted) => {
+      if (isGranted) {
         return
       }
-      // 未授权弹窗提示
-      const confirm = await this.getUIContext().getPromptAction().showDialog(this.confirmConfig)
-      if (confirm.index === 1) {
-        // 第二次请求权限
-        const isOk2 = await permission.onSettingPermissions(this.permissions)
-        if (isOk2) {
+      this.getUIContext().getPromptAction().showDialog(this.confirmConfig).then((result) => {
+        if (result.index !== 1) {
+          this.backToPreviousPage()
           return
         }
-      }
-      this.getUIContext().getRouter().back()
-    } catch (e) {
-      promptAction.openToast({ message: '未授权' })
-        .then(() => {
-          this.getUIContext().getRouter().back()
-        })
+        permission.onSettingPermissions(this.permissions).then((grantedInSettings) => {
+          if (!grantedInSettings) {
+            this.backToPreviousPage()
+          }
+        }, () => this.backToPreviousPage())
+      }, () => this.backToPreviousPage())
+    }, () => this.backToPreviousPage())
+  }
 
-    }
+  private backToPreviousPage(): void {
+    this.getUIContext().getPromptAction().showToast({ message: '麦克风授权失败' })
+    this.getUIContext().getRouter().back()
   }
 
   aboutToAppear(): void {

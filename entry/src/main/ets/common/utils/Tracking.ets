@@ -1,40 +1,38 @@
 import { TimeItem } from '../../models/HomeModels';
 import { tgRequest } from './request';
-import { promptAction } from '@kit.ArkUI';
 import { preferences } from '@kit.ArkData';
 import { contextManager } from './ContextManager';
 
-// 积累五条数据上报一次
 class Tracking {
   private timeItem: TimeItem = {} as TimeItem
 
-  // 记录
-  start(id: string) {
+  start(id: string): void {
     this.timeItem.questionId = id
     this.timeItem.startTime = Date.now()
   }
 
-  // 上报
-  async save() {
+  save(): Promise<void> {
     this.timeItem.endTime = Date.now()
-
-    const trackFile = preferences.getPreferencesSync(contextManager.getCtx(), { name: 'trackFile' })
+    const context = contextManager.getCtx()
+    if (!context) {
+      return Promise.resolve()
+    }
+    const trackFile = preferences.getPreferencesSync(context, { name: 'trackFile' })
     const list = trackFile.getSync('list', []) as TimeItem[]
     list.push(this.timeItem)
-    if (list.length === 5) {
-      await tgRequest({ url: '/hm/time/tracking', method: 'POST', data: { timeList: list } })
-      promptAction.openToast({ message: '上报成功' })
-        .then(() => {
-          trackFile.putSync('list', [])
-          trackFile.flushSync()
-        })
-    } else {
+    if (list.length < 5) {
       trackFile.putSync('list', list)
       trackFile.flushSync()
+      return Promise.resolve()
     }
-
+    return tgRequest({ url: '/hm/time/tracking', method: 'POST', data: { timeList: list } }).then((): void => {
+      trackFile.putSync('list', [])
+      trackFile.flushSync()
+    }, (): void => {
+      trackFile.putSync('list', list)
+      trackFile.flushSync()
+    })
   }
 }
-
 
 export const tracking = new Tracking();

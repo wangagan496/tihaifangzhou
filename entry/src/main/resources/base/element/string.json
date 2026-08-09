@@ -51,6 +51,10 @@
     {
       "name": "reason_record",
       "value": "刷题宝需要访问麦克风才能帮您录音"
+    },
+    {
+      "name": "reason_save_image",
+      "value": "用于将题目分享图片保存到图库"
     }
   ]
 }

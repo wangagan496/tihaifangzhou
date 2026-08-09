@@ -7,20 +7,32 @@ import { abilityAccessCtrl, PermissionRequestResult, Permissions } from '@kit.Ab
 class Permission {
   private isAllow: boolean = false
 
-  async requestPermissions(permissions: Permissions[]) {
+  requestPermissions(permissions: Permissions[]): Promise<boolean> {
     const mgr = abilityAccessCtrl.createAtManager()
     const ctx = AppStorage.get<Context>('context')
-    await mgr.requestPermissionsFromUser(ctx, permissions).then((data: PermissionRequestResult) => {
+    if (!ctx) {
+      return Promise.resolve(false)
+    }
+    return mgr.requestPermissionsFromUser(ctx, permissions).then((data: PermissionRequestResult): boolean => {
       this.isAllow = data.authResults.every(item => item === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED)
+      return this.isAllow
+    }, (): boolean => {
+      this.isAllow = false
+      return false
     })
-    return this.isAllow
   }
 
-  async onSettingPermissions(permissions: Permissions[]) {
+  onSettingPermissions(permissions: Permissions[]): Promise<boolean> {
     const mgr = abilityAccessCtrl.createAtManager()
     const ctx = AppStorage.get<Context>('context')
-    const res = await mgr.requestPermissionOnSetting(ctx, permissions)
-    return res.every(i => i === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED)
+    if (!ctx) {
+      return Promise.resolve(false)
+    }
+    return mgr.requestPermissionOnSetting(ctx, permissions).then((res): boolean => {
+      return res.every(i => i === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED)
+    }, (): boolean => {
+      return false
+    })
   }
 }
 

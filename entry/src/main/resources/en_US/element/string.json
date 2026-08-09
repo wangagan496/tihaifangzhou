@@ -51,6 +51,10 @@
     {
       "name": "reason_record",
       "value": "need record quanxian"
+    },
+    {
+      "name": "reason_save_image",
+      "value": "Used to save question sharing images to the photo library"
     }
   ]
 }

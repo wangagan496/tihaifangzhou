@@ -6,22 +6,22 @@ import { promptAction, router } from '@kit.ArkUI';
 // 2、用户数据持久化工具类，封装了AppStorage和PersistentStorage，对原来存用户数据取用户数据的操作进行替换
 class Auth {
   // 初始化用户信息,确保信息能够持久化
-  initUser() {
+  initUser(): void {
     PersistentStorage.persistProp('user', {})
   }
 
   // 保存或修改用户信息
-  setUser(user: ILoginDta) {
+  setUser(user: ILoginDta): void {
     AppStorage.set('user', user)
   }
 
   // 获取用户信息
-  getUser() {
+  getUser(): ILoginDta | undefined {
     return AppStorage.get<ILoginDta>('user')
   }
 
   // 移除用户信息
-  removeUser() {
+  removeUser(): void {
     AppStorage.set('user', {})
   }
 
@@ -31,27 +31,17 @@ class Auth {
   // 2、登录页面，登录成功后，将参数从登录页面取出，跳转页面，登录页面使用replaceUrl跳转
   // 3、原来url参数为LoginPage的，修改为目标页面
   // 4、使用getRouter跳转的都改为checkAuth，参数直接传递到checkAuth
-  checkAuth(options: router.RouterOptions) {
+  checkAuth(options: router.RouterOptions): Promise<void> {
     const user = this.getUser();
-    // 登录了就跳转页面
     if (user?.token) {
-      contextManager.UiCtx?.getRouter().pushUrl(options)
-
-      // 未登录，将参数携带到登录页面
-    } else {
-
-      promptAction.openToast({
-        message: '请先登录',
-      }).then(() => {
-        contextManager.UiCtx?.getRouter().pushUrl({
-          url: 'pages/LoginPage',
-          params: {
-            backUrl: options.url,
-            backParams: options.params
-          }
-        })
-      })
+      return contextManager.UiCtx?.getRouter().pushUrl(options).then((): void => {}, (): void => {}) || Promise.resolve()
     }
+    return promptAction.openToast({ message: '请先登录' }).then(() => {
+      return contextManager.UiCtx?.getRouter().pushUrl({
+        url: 'pages/LoginPage',
+        params: { backUrl: options.url, backParams: options.params }
+      })
+    }, (): void => {}).then((): void => {}, (): void => {})
   }
 }
 

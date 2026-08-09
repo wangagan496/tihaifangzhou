@@ -57,21 +57,31 @@ export struct QuestionDetailPage {
   // 3、退出界面，保存时间点
 
   aboutToAppear(): void {
-    const params = this.getUIContext().getRouter().getParams() as ParamsType
-    if (params) {
-      this.getData(params.id)
-    }
+    this.loadQuestionFromRoute()
   }
 
   aboutToDisappear(): void {
-
     tracking.save()
+  }
+
+  private loadQuestionFromRoute(): void {
+    const params = this.getUIContext().getRouter().getParams() as ParamsType
+    if (params && params.id) {
+      this.getData(params.id)
+      return
+    }
+    this.isLoading = false
+    this.showToast('题目参数无效')
+  }
+
+  private showToast(message: string): void {
+    this.getUIContext().getPromptAction().showToast({ message })
   }
 
   // 1、自定义的加载弹窗，实现，使用ai完成
   // 帮我在这个页面上添加自定义加载弹窗，这个弹窗在项目中写好了，直接使用，发请求之前打开，请求完成之后关闭。
   // 2、加上骨架屏，使用布尔值控制，渲染动态数据的地方，使用骨架屏
-  async getData(id: number) {
+  getData(id: number): void {
     this.questionId = id
     this.loadingController = new CustomDialogController({
       builder: TgLoadingDialog({ message: '加载中...' }),
@@ -83,85 +93,74 @@ export struct QuestionDetailPage {
       backgroundColor: 'transparent'
     })
     this.loadingController.open()
-
-    try {
-      const result = await tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` })
+    tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` }).then((result): void => {
       this.question = result
       this.isLoading = false
       tracking.start(this.questionId.toString())
+      this.closeLoading()
+    }, (): void => {
+      this.isLoading = false
+      this.showToast('获取题目详情失败')
+      this.closeLoading()
+    })
+  }
 
-    } catch (err) {
-      this.getUIContext().getPromptAction().showToast({
-        message: '获取题目详情失败'
-      })
-    } finally {
-      if (this.loadingController) {
-        this.loadingController.close()
-        this.loadingController = undefined
-      }
+  private closeLoading(): void {
+    if (this.loadingController) {
+      this.loadingController.close()
+      this.loadingController = undefined
     }
   }
 
   // 跳转上一题，下一题
-  onPreOrNext(sign: 'pre' | "next") {
+  onPreOrNext(sign: 'pre' | "next"): void {
     // 题目列表id
     const idList = AppStorage.get('idList') as Array<number>
     // 判断题目列表是否为空
     if (!idList || idList.length === 0) {
-      return this.getUIContext().getPromptAction().showToast({
-        message: "题目列表为空"
-      })
+      this.showToast('题目列表为空')
+      return
     }
     // 获取题目列表中当前题目的索引
     const selfIndex = idList.findIndex(item => item === this.questionId)
     // 判断题目id是否存在
     if (selfIndex === -1) {
-      return this.getUIContext().getPromptAction().showToast({
-        message: "题目不存在"
-      })
+      this.showToast('题目不存在')
+      return
     }
     // 根据标识符判断是上一题还是下一题
     switch (sign) {
       case 'pre':
         if (selfIndex === 0) {
-          return this.getUIContext().getPromptAction().showToast({
-            message: "已经是第一题了"
-          })
+          this.showToast('已经是第一题了')
+          return
         }
         this.getData(idList[selfIndex - 1])
         break
       case 'next':
         if (selfIndex === idList.length - 1) {
-          return this.getUIContext().getPromptAction().showToast({
-            message: "已经是最后一题了"
-          })
+          this.showToast('已经是最后一题了')
+          return
         }
         this.getData(idList[selfIndex + 1])
         break
     }
   }
 
-  async opt(flag: 1 | 0, optType: 1 | 2) {
-    await tgRequest<null, IBodyData>({
-      url: flag === 1 ? 'hm/question/opt' : 'hm/question/unOpt',
-      method: 'POST',
-      data: {
-        id: this.questionId,
-        type: 1,
-        optType
+  opt(flag: 1 | 0, optType: 1 | 2): void {
+    tgRequest<null, IBodyData>({
+        url: flag === 1 ? 'hm/question/opt' : 'hm/question/unOpt',
+        method: 'POST',
+        data: { id: this.questionId, type: 1, optType }
+      }).then((): void => {
+      if (optType === 1) {
+        this.question.likeFlag = flag
+        this.showToast(flag === 1 ? '点赞成功' : '取消点赞成功')
+      } else {
+        this.question.collectFlag = flag
+        this.showToast(flag === 1 ? '收藏成功' : '取消收藏成功')
       }
-    })
-    if (optType === 1) {
-      this.question.likeFlag = flag
-      this.getUIContext().getPromptAction().showToast({
-        message: flag === 1 ? '点赞成功' : '取消点赞成功'
-      })
-    } else if (optType === 2) {
-      this.question.collectFlag = flag
-      this.getUIContext().getPromptAction().showToast({
-        message: flag === 1 ? '收藏成功' : '取消收藏成功'
-      })
-    }
+    }, (): void => this.showToast('操作失败，请稍后重试'))
   }
 
   // 题目所属标签
@@ -292,12 +291,6 @@ export struct QuestionDetailPage {
             }
             .padding((15))
             .layoutWeight(1)
-            .onScroll((xOffset: number, yOffset: number) => {
-              console.log('mylog->xOffset', xOffset + ' ' + yOffset)
-            })
-            .onScrollStop(() => {
-              console.log('mylog->Scroll Stop')
-            })
           }.layoutWeight(1)
         }
 

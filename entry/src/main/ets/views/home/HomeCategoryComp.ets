@@ -20,11 +20,16 @@ export struct HomeCategoryComp {
     this.getTabBarData()
   }
 
-  async getTabBarData() {
+  getTabBarData(): Promise<void> {
     this.isLoading = true
-    const res = await tgRequest<IQuestionType[]>({ url: '/hm/question/type' })
-    this.questionTypeList = res
-    this.isLoading = false
+    return tgRequest<IQuestionType[]>({ url: '/hm/question/type' }).then((res): void => {
+      this.questionTypeList = res
+      this.isLoading = false
+    }, (): void => {
+      this.questionTypeList = []
+      this.isLoading = false
+      this.getUIContext().getPromptAction().showToast({ message: '分类加载失败，请稍后重试' })
+    })
   }
 
   @Builder
