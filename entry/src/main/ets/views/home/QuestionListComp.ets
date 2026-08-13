@@ -30,6 +30,7 @@ export struct QuestionListComp {
   // 1、给列表传递selfIndex
   // 2、比较selfIndex和params.index，如果相同则加载数据
 
+  // 刷新替换第一页，加载更多追加下一页；只有请求成功后才推进 page。
   loadData(isLoadMore: boolean): Promise<void> {
     if (this.selfIndex !== this.params.index) {
       return Promise.resolve()

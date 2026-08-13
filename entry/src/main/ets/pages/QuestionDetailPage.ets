@@ -60,6 +60,7 @@ export struct QuestionDetailPage {
     this.loadQuestionFromRoute()
   }
 
+  // 当前源码在离开详情页时保存一次时长；连续切题覆盖属于已识别边界，详见代码导览。
   aboutToDisappear(): void {
     tracking.save()
   }
@@ -96,6 +97,7 @@ export struct QuestionDetailPage {
     tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` }).then((result): void => {
       this.question = result
       this.isLoading = false
+      // 详情成功后再启动计时，避免把请求加载耗时计入阅读时长。
       tracking.start(this.questionId.toString())
       this.closeLoading()
     }, (): void => {

@@ -6,6 +6,7 @@ import { theme } from '../common/utils/Theme';
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
+  // 启动链路的第一步：保存 Context，供 Preferences、RDB 等非组件工具使用。
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     AppStorage.setOrCreate('context', this.context)
     hilog.info(DOMAIN, 'EntryAbility', 'Ability onCreate');
@@ -15,6 +16,7 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, 'EntryAbility', 'Ability onDestroy');
   }
 
+  // 主窗口创建后初始化主题并加载 Index；Index 再组织四个一级 Tab。
   onWindowStageCreate(windowStage: window.WindowStage): void {
     hilog.info(DOMAIN, 'EntryAbility', 'Ability onWindowStageCreate');
     theme.initTheme()

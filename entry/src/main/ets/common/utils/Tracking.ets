@@ -6,11 +6,13 @@ import { contextManager } from './ContextManager';
 class Tracking {
   private timeItem: TimeItem = {} as TimeItem
 
+  // 只在题目详情请求成功、内容可展示后开始计时，不把接口等待时间算进去。
   start(id: string): void {
     this.timeItem.questionId = id
     this.timeItem.startTime = Date.now()
   }
 
+  // 离开详情页时写入本地队列；满 5 条才上报，成功清空、失败保留。
   save(): Promise<void> {
     this.timeItem.endTime = Date.now()
     const context = contextManager.getCtx()

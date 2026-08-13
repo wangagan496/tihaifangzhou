@@ -15,6 +15,7 @@ class AudioDB {
   private readonly tableName: string = 'interview_audio'
   private initialized: boolean = false
 
+  // RDB 只保存录音元数据；实际 m4a 文件保留在应用沙箱。
   initStore(): Promise<boolean> {
     if (this.initialized && this.store) {
       return Promise.resolve(true)
@@ -80,6 +81,7 @@ class AudioDB {
     return this.store.update(item, predicates).then((count): boolean => count > 0, (): boolean => false)
   }
 
+  // 查询始终带 user_id 条件，避免切换账号后读取到别人的录音。
   query(userId: string): Promise<InterviewAudioItem[]> {
     if (!this.store || !userId) {
       return Promise.resolve([])

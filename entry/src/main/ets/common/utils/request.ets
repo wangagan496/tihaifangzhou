@@ -10,6 +10,7 @@ export const instance = axios.create({
 })
 
 // 请求拦截器：在请求发送前统一处理
+// 统一请求入口：在这里注入 Token，业务页面不重复拼 Authorization。
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // 从全局存储获取用户信息（包含 token）
   const user = auth.getUser()
@@ -23,6 +24,7 @@ instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // 响应拦截器：统一处理响应数据
 // 1、响应成功：区分业务成功和业务失败
 // 2、响应失败：判断状态码 401，删除 token，跳转登录页面
+// 统一响应出口：业务码失败继续 reject；401 清理登录态并替换到登录页。
 instance.interceptors.response.use(
   // 响应成功回调
   (res: AxiosResponse) => {

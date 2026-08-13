@@ -379,3 +379,9 @@ GET /hm/question/{id}
 - 能正确声明和申请运行时权限。
 - 能通过日志定位页面、网络、权限和存储问题。
 - 能在不破坏混淆和路由的前提下完成 release 构建。
+
+## 本地签名配置
+
+`build-profile.json5` 仅用于本机签名，已被 Git 忽略，不能提交证书路径、口令、`.p12`、`.cer` 或 `.p7b` 材料。首次克隆后，复制 `build-profile.example.json5` 为 `build-profile.json5`，再通过 DevEco Studio 创建或选择自己的调试签名。
+
+如果仓库历史中曾出现过签名材料或口令，请在本机重新生成签名材料；普通提交不能从既有 Git 历史中抹除已上传的值。

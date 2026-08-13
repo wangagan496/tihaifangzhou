@@ -19,6 +19,7 @@ export struct AudioRecordComp {
   private isTransitioning: boolean = false
   onRecordEnd: (item: InterviewAudioItem) => void = () => {}
 
+  // 音频写入应用沙箱；FD 交给 AVRecorder，停止或失败时必须关闭。
   startRecord(): Promise<boolean> {
     const context = this.getUIContext().getHostContext()
     if (!context) {
@@ -123,6 +124,7 @@ export struct AudioRecordComp {
     this.maxAmplitude = 0
   }
 
+  // 退出页面也统一停止录制、释放 AVRecorder 并关闭文件描述符。
   aboutToDisappear(): void {
     if (this.avRecorder) { this.stopRecord() } else { this.clearRecordResources() }
   }

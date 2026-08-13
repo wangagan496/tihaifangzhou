@@ -13,6 +13,7 @@ export struct AudioPlayer {
   @State total: number = 0
   @State value: number = 0
 
+  // 按沙箱文件路径创建播放器；播放器和文件描述符都在 stop/离页时释放。
   startPlay(): void {
     if (this.isTransitioning || this.avPlayer || !this.item.path) {
       return

@@ -17,6 +17,7 @@ struct AudioPage {
     ]
   }
 
+  // 麦克风属于敏感能力：运行时授权失败就不初始化录音组件。
   getPermission(): void {
     permission.requestPermissions(this.permissions).then((isGranted) => {
       if (isGranted) {

@@ -31,6 +31,7 @@ class Auth {
   // 2、登录页面，登录成功后，将参数从登录页面取出，跳转页面，登录页面使用replaceUrl跳转
   // 3、原来url参数为LoginPage的，修改为目标页面
   // 4、使用getRouter跳转的都改为checkAuth，参数直接传递到checkAuth
+  // 受保护页面统一从这里进入：未登录时保存目标路由，登录成功后再回跳。
   checkAuth(options: router.RouterOptions): Promise<void> {
     const user = this.getUser();
     if (user?.token) {
