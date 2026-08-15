@@ -2,6 +2,7 @@ import { TimeItem } from '../../models/HomeModels';
 import { tgRequest } from './request';
 import { preferences } from '@kit.ArkData';
 import { contextManager } from './ContextManager';
+import { appendTrackingItem, resolveTrackingQueue, shouldUploadTrackingQueue } from './TrackingPolicy';
 
 class Tracking {
   private timeItem: TimeItem = {} as TimeItem
@@ -20,18 +21,18 @@ class Tracking {
       return Promise.resolve()
     }
     const trackFile = preferences.getPreferencesSync(context, { name: 'trackFile' })
-    const list = trackFile.getSync('list', []) as TimeItem[]
-    list.push(this.timeItem)
-    if (list.length < 5) {
+    const storedList = trackFile.getSync('list', []) as TimeItem[]
+    const list = appendTrackingItem(storedList, this.timeItem)
+    if (!shouldUploadTrackingQueue(list)) {
       trackFile.putSync('list', list)
       trackFile.flushSync()
       return Promise.resolve()
     }
     return tgRequest({ url: '/hm/time/tracking', method: 'POST', data: { timeList: list } }).then((): void => {
-      trackFile.putSync('list', [])
+      trackFile.putSync('list', resolveTrackingQueue(list, true))
       trackFile.flushSync()
     }, (): void => {
-      trackFile.putSync('list', list)
+      trackFile.putSync('list', resolveTrackingQueue(list, false))
       trackFile.flushSync()
     })
   }

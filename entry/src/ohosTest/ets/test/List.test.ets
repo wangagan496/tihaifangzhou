@@ -1,5 +1,5 @@
-import abilityTest from './Ability.test';
+import audioDBTest from './AudioDB.test'
 
 export default function testsuite() {
-  abilityTest();
+  audioDBTest()
 }

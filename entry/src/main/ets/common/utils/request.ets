@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from '@ohos/axios'
 import { contextManager } from './ContextManager'
 import { auth } from './Auth'
+import { isUnauthorizedStatus } from './AuthPolicy'
 
 
 // 创建 axios 实例，配置基础请求地址
@@ -42,7 +43,7 @@ instance.interceptors.response.use(
   // 响应失败回调（网络错误、服务器错误等）
   (err: AxiosError) => {
     // 401 状态码表示 token 过期或无效
-    if (err.response?.status === 401) {
+    if (isUnauthorizedStatus(err.response?.status)) {
       // 清除本地存储的用户信息
       auth.removeUser()
       // 跳转到登录页面

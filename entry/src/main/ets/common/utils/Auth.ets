@@ -1,6 +1,7 @@
 import { ILoginDta } from '../../models/AccountModel';
 import { contextManager } from './ContextManager';
 import { promptAction, router } from '@kit.ArkUI';
+import { buildAuthBackParams, hasLoginToken } from './AuthPolicy';
 
 // 1、mine页面判断是否登录，登录了就显示用户信息，没有登录就显示未登录，点击跳转登录页
 // 2、用户数据持久化工具类，封装了AppStorage和PersistentStorage，对原来存用户数据取用户数据的操作进行替换
@@ -34,13 +35,18 @@ class Auth {
   // 受保护页面统一从这里进入：未登录时保存目标路由，登录成功后再回跳。
   checkAuth(options: router.RouterOptions): Promise<void> {
     const user = this.getUser();
-    if (user?.token) {
-      return contextManager.UiCtx?.getRouter().pushUrl(options).then((): void => {}, (): void => {}) || Promise.resolve()
+    if (!hasLoginToken(user?.token)) {
+      return this.navigateToLogin(options, '请先登录')
     }
-    return promptAction.openToast({ message: '请先登录' }).then(() => {
+    return contextManager.UiCtx?.getRouter().pushUrl(options).then((): void => {}, (): void => {}) || Promise.resolve()
+  }
+
+  private navigateToLogin(options: router.RouterOptions, message: string): Promise<void> {
+    const backParams = buildAuthBackParams(options.url, options.params)
+    return promptAction.openToast({ message: message }).then(() => {
       return contextManager.UiCtx?.getRouter().pushUrl({
         url: 'pages/LoginPage',
-        params: { backUrl: options.url, backParams: options.params }
+        params: backParams
       })
     }, (): void => {}).then((): void => {}, (): void => {})
   }

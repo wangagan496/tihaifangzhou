@@ -10,7 +10,7 @@ export interface InterviewAudioItem extends ValuesBucket {
   create_time: number
 }
 
-class AudioDB {
+export class AudioDB {
   private store?: relationalStore.RdbStore
   private readonly tableName: string = 'interview_audio'
   private initialized: boolean = false
