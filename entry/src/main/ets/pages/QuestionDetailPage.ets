@@ -4,6 +4,9 @@ import { TgLoadingDialog } from '../common/components/TgLoadingDialog'
 import { tgRequest } from '../common/utils/request'
 import { TgTag } from '../views/home/TgTag'
 import { tracking } from '../common/utils/Tracking'
+import { auth } from '../common/utils/Auth'
+import { mineQuestionStore } from '../common/utils/MineQuestionStore'
+import { MineQuestionRecord } from '../common/utils/MineQuestionPolicy'
 
 export interface QuestionDetail {
   id: string
@@ -97,6 +100,10 @@ export struct QuestionDetailPage {
     tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` }).then((result): void => {
       this.question = result
       this.isLoading = false
+      const userId = auth.getUser()?.id
+      if (userId) {
+        mineQuestionStore.recordHistory(userId, this.toMineQuestionRecord())
+      }
       // 详情成功后再启动计时，避免把请求加载耗时计入阅读时长。
       tracking.start(this.questionId.toString())
       this.closeLoading()
@@ -111,6 +118,17 @@ export struct QuestionDetailPage {
     if (this.loadingController) {
       this.loadingController.close()
       this.loadingController = undefined
+    }
+  }
+
+  private toMineQuestionRecord(): MineQuestionRecord {
+    return {
+      id: this.question.id,
+      stem: this.question.stem,
+      difficulty: this.question.difficulty,
+      likeCount: this.question.likeCount,
+      views: this.question.views,
+      readFlag: this.question.readFlag
     }
   }
 
@@ -157,9 +175,17 @@ export struct QuestionDetailPage {
       }).then((): void => {
       if (optType === 1) {
         this.question.likeFlag = flag
+        const userId = auth.getUser()?.id
+        if (userId) {
+          mineQuestionStore.setFlag('like', userId, this.toMineQuestionRecord(), flag === 1)
+        }
         this.showToast(flag === 1 ? '点赞成功' : '取消点赞成功')
       } else {
         this.question.collectFlag = flag
+        const userId = auth.getUser()?.id
+        if (userId) {
+          mineQuestionStore.setFlag('collect', userId, this.toMineQuestionRecord(), flag === 1)
+        }
         this.showToast(flag === 1 ? '收藏成功' : '取消收藏成功')
       }
     }, (): void => this.showToast('操作失败，请稍后重试'))

@@ -1,23 +1,10 @@
-import { TgClockIn } from '../../common/components/TgClockIn'
-import { auth } from '../../common/utils/Auth'
+import { MineProfileHeader } from './MineProfileHeader'
+import { MineStatsGrid } from './MineStatsGrid'
+import { MineToolsList } from './MineToolsList'
 import { tgRequest } from '../../common/utils/request'
 import { windowManager } from '../../common/utils/WindowManager'
 import { ILoginDta } from '../../models/AccountModel'
 import { StudyTimeData } from '../../pages/StudyTimePage'
-
-interface Nav {
-  icon: ResourceStr
-  name: string
-  onClick?: () => void
-  other?: string
-}
-
-interface Tool {
-  icon: ResourceStr
-  name: string
-  value?: string
-  onClick?: () => void
-}
 
 @Component
 export default struct Mine {
@@ -33,121 +20,16 @@ export default struct Mine {
     windowManager.setStatusBarDark()
   }
 
-  // 获取数据
-  async getData() {
+  private async getData(): Promise<void> {
     const res = await tgRequest<StudyTimeData>({ url: '/hm/studyInfo' })
     this.totalTime = res.totalTime
   }
 
-  // 3. 转数据为 时 分 秒
-  switchTime(second: number) {
-    //    >3600 小时
-    if (second >= 3600) {
-      return (second / 3600).toFixed(1) + '小时'
-    }
-
-    //   >60 <3600 分钟
-    if (second >= 60) {
-      return (second / 60).toFixed(1) + '分钟'
-    }
-    //   <60 秒
-    return second + '秒'
-
-  }
-
   build() {
     Column({ space: 16 }) {
-      Row({ space: 12 }) {
-        Image(this.user.avatar || $r('app.media.ic_mine_avatar'))
-          .width(55)
-          .aspectRatio(1)
-          .borderRadius(55)
-        if (this.user.nickName) {
-          Column({ space: 4 }) {
-            Text(this.user.nickName)
-              .fontSize(18)
-              .fontWeight(600)
-              .width('100%')
-              .margin({ bottom: 5 })
-            Row() {
-              Text('编辑个人信息')
-                .fontColor($r('app.color.ih_gray_color'))
-                .fontSize(11)
-                .margin({ right: 4 })
-              Image($r('app.media.icon_edit'))
-                .width(10)
-                .height(10)
-                .fillColor($r('app.color.ih_gray_color'))
-            }.onClick(() => {
-              //todo: 跳转到个人信息页面
-              auth.checkAuth({ url: 'pages/ProfileEditPage' })
-            })
-            .width('100%')
-
-          }
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-        } else {
-          Text('请登录')
-            .layoutWeight(1)
-            .onClick(() => {
-              auth.checkAuth({ url: 'pages/LoginPage' })
-            })
-        }
-
-        TgClockIn()
-      }
-      .width('100%')
-      .height(100)
-
-      GridRow({ columns: 4 }) {
-        this.navBuilder({ icon: $r('app.media.ic_mine_history'), name: '历史记录' })
-        this.navBuilder({ icon: $r('app.media.ic_mine_collect'), name: '我的收藏' })
-        this.navBuilder({ icon: $r('app.media.ic_mine_like'), name: '我的点赞' })
-        this.navBuilder({
-          icon: $r('app.media.ic_mine_study'),
-          name: '累计学时',
-          other: this.switchTime(this.totalTime)
-        ,
-          onClick: () => {
-            auth.checkAuth({ url: 'pages/StudyTimePage' })
-          }
-        })
-      }
-      .backgroundColor($r('app.color.white'))
-      .padding(16)
-      .borderRadius(8)
-
-      Column() {
-        this.toolsBuilder({
-          icon: $r('app.media.ic_mine_notes'), name: '前端常用词', onClick: () => {
-            auth.checkAuth({
-              url: 'pages/WordPage'
-            })
-          }
-        })
-        this.toolsBuilder({
-          icon: $r('app.media.ic_mine_ai'), name: '面试录音', onClick: () => {
-            auth.checkAuth({
-              url: 'pages/AudioPage'
-            })
-          }
-        })
-        this.toolsBuilder({ icon: $r('app.media.ic_mine_invite'), name: '推荐分享' })
-        this.toolsBuilder({ icon: $r('app.media.ic_mine_file'), name: '意见反馈' })
-        this.toolsBuilder({ icon: $r('app.media.ic_mine_info'), name: '关于我们' })
-        this.toolsBuilder({
-          icon: $r('app.media.ic_mine_setting'), name: '设置',
-          onClick: () => {
-            auth.checkAuth({
-              url: 'pages/SettingsPage'
-            })
-          }
-        })
-      }
-      .backgroundColor($r('app.color.white'))
-      .borderRadius(8)
-
+      MineProfileHeader({ user: this.user })
+      MineStatsGrid({ totalTime: this.totalTime })
+      MineToolsList()
     }
     .padding($r('app.float.common_gutter'))
     .backgroundColor($r('app.color.common_gray_bg'))
@@ -156,64 +38,5 @@ export default struct Mine {
     })
     .width('100%')
     .height('100%')
-  }
-
-  @Builder
-  navBuilder(nav: Nav) {
-    GridCol() {
-      Column() {
-        Image(nav.icon)
-          .width(30)
-          .aspectRatio(1)
-          .margin({ bottom: 10 })
-        Text(nav.name)
-          .fontSize(14)
-          .fontColor($r('app.color.common_gray_03'))
-          .margin({ bottom: 4 })
-        if (nav.other) {
-          Row() {
-            Text(nav.other)
-              .fontSize(12)
-              .fontColor($r('app.color.common_gray_01'))
-            Image($r('sys.media.ohos_ic_public_arrow_right'))
-              .width(12)
-              .aspectRatio(1)
-              .fillColor($r('app.color.common_gray_01'))
-          }
-        }
-      }
-      .onClick(() => {
-        nav.onClick && nav.onClick()
-      })
-    }
-  }
-
-  @Builder
-  toolsBuilder(tool: Tool) {
-    Row() {
-      Image(tool.icon)
-        .width(16)
-        .aspectRatio(1)
-        .margin({ right: 12 })
-      Text(tool.name)
-        .fontSize(14)
-        .fontColor($r('app.color.common_gray_03'))
-      Blank()
-      if (tool.value) {
-        Text(tool.value)
-          .fontSize(12)
-          .fontColor($r('app.color.common_gray_01'))
-      }
-      Image($r('sys.media.ohos_ic_public_arrow_right'))
-        .width(16)
-        .aspectRatio(1)
-        .fillColor($r('app.color.common_gray_01'))
-        .onClick(() => {
-          tool.onClick && tool.onClick()
-        })
-    }
-    .height(50)
-    .width('100%')
-    .padding({ left: 16, right: 10 })
   }
 }

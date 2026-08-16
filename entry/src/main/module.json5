@@ -7,11 +7,6 @@
         "name": "ohos.permission.MICROPHONE",
         "usedScene": {},
         "reason": "$string:reason_record"
-      },
-      {
-        "name": "ohos.permission.WRITE_IMAGEVIDEO",
-        "usedScene": {},
-        "reason": "$string:reason_save_image"
       }
     ],
     "name": "entry",

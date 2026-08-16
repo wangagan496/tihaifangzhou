@@ -6,11 +6,11 @@
     },
     {
       "name": "EntryAbility_desc",
-      "value": "刷题宝next版本"
+      "value": "题海方舟 NEXT 版本"
     },
     {
       "name": "EntryAbility_label",
-      "value": "刷题宝"
+      "value": "题海方舟"
     },
     {
       "name": "hd_search_placeholder",
@@ -50,7 +50,7 @@
     },
     {
       "name": "reason_record",
-      "value": "面通App需要访问麦克风才能帮您录音"
+      "value": "题海方舟需要访问麦克风才能帮您录音"
     },
     {
       "name": "reason_save_image",

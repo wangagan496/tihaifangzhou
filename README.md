@@ -1,6 +1,6 @@
-# 刷题宝（HarmonyOS NEXT）
+# 题海方舟（HarmonyOS NEXT）
 
-刷题宝是一款面向求职与技能提升场景的 HarmonyOS NEXT 学习应用。应用以题库练习为核心，提供题目筛选与详情浏览、打卡、学习时长统计、面经、项目资料、个人资料维护、英语单词和面试录音等功能。
+题海方舟是一款面向求职与技能提升场景的 HarmonyOS NEXT 学习应用。应用以题库练习为核心，提供题目筛选与详情浏览、历史记录、收藏、点赞、打卡、学习时长统计、面经、项目资料、个人资料维护、英语单词和面试录音等功能。
 
 > 当前工程为单 `entry` 模块的 Stage 模型应用，主要面向手机设备。应用版本为 `8.3.0`，构建目标为 HarmonyOS SDK `6.0.2(22)`。
 
@@ -12,7 +12,7 @@
 | 题目详情 | 富文本答案展示、上一题/下一题、点赞、收藏、分享，以及阅读时长追踪 |
 | 学习打卡 | 当日打卡、连续打卡和累计打卡日历展示 |
 | 项目与面经 | 项目学习内容及面经浏览入口 |
-| 个人中心 | 登录状态、学习时长、资料编辑、设置、单词学习、面试录音入口 |
+| 个人中心 | 登录状态、历史记录、我的收藏、我的点赞、学习时长、资料编辑、设置、单词学习、面试录音、推荐分享、意见反馈和关于我们 |
 | 单词学习 | 单词浏览及英文发音播放 |
 | 面试录音 | 麦克风录音、播放、重命名、删除；录音元数据保存在本地数据库 |
 | 外观与隐私 | 浅色/深色/跟随系统主题，用户协议与隐私政策入口 |
@@ -26,7 +26,8 @@
 - `@ohmos/calendar`：打卡日历
 - `dayjs`：日期处理
 - `relationalStore`：录音列表本地 RDB 存储
-- `preferences`：题目阅读时长的离线队列
+- `preferences`：题目阅读时长离线队列、按用户隔离的历史/收藏/点赞记录和本地反馈
+- `@kit.ShareKit`：调用系统文本分享面板
 - `@ohos/hypium`：单元与设备测试基础设施
 
 ## 应用结构
@@ -60,7 +61,7 @@ build-profile.json5                    # 工程 SDK、签名和产品构建配�
 3. 面经：面试经验内容。
 4. 我的：用户信息与学习工具。
 
-路由表定义在 [`entry/src/main/resources/base/profile/main_pages.json`](entry/src/main/resources/base/profile/main_pages.json)，主要二级页面包括登录、打卡、题目详情、搜索、资料编辑、学习时长、单词、录音、设置和隐私页面。
+路由表定义在 [`entry/src/main/resources/base/profile/main_pages.json`](entry/src/main/resources/base/profile/main_pages.json)，主要二级页面包括登录、打卡、题目详情、搜索、资料编辑、学习时长、单词、录音、设置、隐私、历史/收藏/点赞列表、意见反馈和关于我们页面。
 
 ## 环境要求
 
@@ -120,6 +121,10 @@ https://api-harmony-teach.itheima.net
 - 登录用户与主题偏好：`PersistentStorage` / `AppStorage`。
 - 面试录音元数据：RDB 数据库 `interview_audio.db`，按用户和创建时间索引。
 - 题目阅读时长：`preferences` 中的 `trackFile`；每累计 5 条记录后尝试批量上报，失败时保留待下次重试。
+- 我的题目记录：`common/utils/MineQuestionStore.ets` 使用 `preferences` 的 `mineQuestions` 文件，按用户 ID 保存历史记录、收藏和点赞列表。
+- 意见反馈：`pages/MineFeedbackPage.ets` 使用 `preferences` 的 `feedback` 文件保存最近一次反馈；当前没有对应的服务端反馈接口。
+
+题目详情中的点赞和收藏仍通过服务端接口更新；“我的收藏”和“我的点赞”列表是客户端按用户隔离的本地镜像。推荐分享调用系统分享面板，不依赖项目自建分享接口。
 
 如果要切换到自有后端，请仅修改网络层的 `baseURL`，并确保接口响应保持 `{ code, data, message, success }` 结构；当前成功业务码为 `10000`。
 

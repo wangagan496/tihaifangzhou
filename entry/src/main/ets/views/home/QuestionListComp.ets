@@ -4,6 +4,7 @@ import { IListData } from '../../models/HomeModels'
 import { QuestionItem, QuestionItemComp } from './QuestionItemComp'
 import { FilterParams } from './QuestionFilterComp'
 import { auth } from '../../common/utils/Auth'
+import { mineQuestionStore } from '../../common/utils/MineQuestionStore'
 
 @Component
 export struct QuestionListComp {
@@ -97,6 +98,17 @@ export struct QuestionListComp {
               })
                 .padding({ left: 10, right: 10 })
                 .onClick(() => {
+                  const userId = auth.getUser()?.id
+                  if (userId) {
+                    mineQuestionStore.recordHistory(userId, {
+                      id: item.id,
+                      stem: item.stem,
+                      difficulty: item.difficulty,
+                      likeCount: item.likeCount,
+                      views: item.views,
+                      readFlag: item.readFlag
+                    })
+                  }
                   auth.checkAuth({
                     url: 'pages/QuestionDetailPage',
                     params: {
