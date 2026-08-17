@@ -11,7 +11,8 @@
 | 首页题库 | 题目分类、难度筛选、下拉刷新、分页加载、搜索入口和题目详情跳转 |
 | 题目详情 | 富文本答案展示、上一题/下一题、点赞、收藏、分享，以及阅读时长追踪 |
 | 学习打卡 | 当日打卡、连续打卡和累计打卡日历展示 |
-| 项目与面经 | 项目学习内容及面经浏览入口 |
+| 项目题库 | 从项目分类接口加载图标、简介和标签，按项目方向筛选题目并支持刷新、分页和详情跳转 |
+| 面经 | 面经搜索、最新/推荐/浏览排序、作者信息展示、详情阅读、点赞收藏分享和阅读埋点 |
 | 个人中心 | 登录状态、历史记录、我的收藏、我的点赞、学习时长、资料编辑、设置、单词学习、面试录音、推荐分享、意见反馈和关于我们 |
 | 单词学习 | 单词浏览及英文发音播放 |
 | 面试录音 | 麦克风录音、播放、重命名、删除；录音元数据保存在本地数据库 |
@@ -57,11 +58,11 @@ build-profile.json5                    # 工程 SDK、签名和产品构建配�
 应用启动后由 `EntryAbility` 加载 `pages/Index`。`Index` 作为底部导航容器，包含以下四个一级视图：
 
 1. 首页：题库、分类和筛选。
-2. 项目：项目学习内容。
-3. 面经：面试经验内容。
+2. 项目：按项目分类浏览和练习项目面试题。
+3. 面经：搜索、排序并阅读真实面试经验。
 4. 我的：用户信息与学习工具。
 
-路由表定义在 [`entry/src/main/resources/base/profile/main_pages.json`](entry/src/main/resources/base/profile/main_pages.json)，主要二级页面包括登录、打卡、题目详情、搜索、资料编辑、学习时长、单词、录音、设置、隐私、历史/收藏/点赞列表、意见反馈和关于我们页面。
+路由表定义在 [`entry/src/main/resources/base/profile/main_pages.json`](entry/src/main/resources/base/profile/main_pages.json)，主要二级页面包括登录、打卡、题目详情、搜索、资料编辑、账号设置、消息推送、学习时长、单词、录音、设置、隐私、历史/收藏/点赞列表、意见反馈和关于我们页面。
 
 ## 环境要求
 
@@ -110,8 +111,9 @@ https://api-harmony-teach.itheima.net
 | 业务 | 接口 |
 | --- | --- |
 | 登录 | `POST /hm/login` |
-| 题目分类、列表与详情 | `/hm/question/type`、`/hm/question/list`、`/hm/question/{id}` |
-| 题目点赞/收藏 | `/hm/question/opt`、`/hm/question/unOpt` |
+| 题目分类、项目分类、列表与详情 | `/hm/question/type`、`/hm/question/list`、`/hm/question/{id}` |
+| 题目/面经点赞收藏 | `/hm/question/opt`、`/hm/question/unOpt` |
+| 面经阅读埋点 | `POST /hm/interview/tracking` |
 | 打卡 | `/hm/clockinInfo`、`POST /hm/clockin` |
 | 学习信息与时长上报 | `/hm/studyInfo`、`POST /hm/time/tracking` |
 | 用户资料 | `/hm/userInfo`、`/hm/userInfo/profile`、`/hm/userInfo/avatar` |
@@ -120,11 +122,12 @@ https://api-harmony-teach.itheima.net
 
 - 登录用户与主题偏好：`PersistentStorage` / `AppStorage`。
 - 面试录音元数据：RDB 数据库 `interview_audio.db`，按用户和创建时间索引。
-- 题目阅读时长：`preferences` 中的 `trackFile`；每累计 5 条记录后尝试批量上报，失败时保留待下次重试。
-- 我的题目记录：`common/utils/MineQuestionStore.ets` 使用 `preferences` 的 `mineQuestions` 文件，按用户 ID 保存历史记录、收藏和点赞列表。
+- 普通题阅读时长：`preferences` 中的 `trackFile`；每累计 5 条记录后尝试批量上报，失败时保留待下次重试。面经按次上报停留时间和是否读到底。
+- 我的内容记录：`common/utils/MineQuestionStore.ets` 使用 `preferences` 的 `mineQuestions` 文件，按用户 ID 和内容类型保存题目/面经的历史记录、收藏和点赞列表。
 - 意见反馈：`pages/MineFeedbackPage.ets` 使用 `preferences` 的 `feedback` 文件保存最近一次反馈；当前没有对应的服务端反馈接口。
+- 消息设置：`common/utils/MessageSettingsStore.ets` 使用 `preferences` 的 `messageSettings` 文件保存学习进度、复习提醒、功能更新及声音振动偏好；`MessageSettingsPage.ets` 可检测系统通知权限并发送测试通知。
 
-题目详情中的点赞和收藏仍通过服务端接口更新；“我的收藏”和“我的点赞”列表是客户端按用户隔离的本地镜像。推荐分享调用系统分享面板，不依赖项目自建分享接口。
+题目和面经详情中的点赞、收藏仍通过服务端接口更新；“我的收藏”和“我的点赞”列表是客户端按用户隔离的本地镜像。推荐分享调用系统分享面板，不依赖项目自建分享接口。
 
 如果要切换到自有后端，请仅修改网络层的 `baseURL`，并确保接口响应保持 `{ code, data, message, success }` 结构；当前成功业务码为 `10000`。
 

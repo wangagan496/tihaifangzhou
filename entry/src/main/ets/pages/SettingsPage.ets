@@ -79,10 +79,18 @@ struct SettingsPage {
             })
           }
         })
-        this.toolsBuilder({ name: '账号设置', radius: 2 })
+        this.toolsBuilder({
+          name: '账号设置', radius: 2, onClick: () => {
+            auth.checkAuth({ url: 'pages/AccountSettingsPage' })
+          }
+        })
         Blank()
           .height(15)
-        this.toolsBuilder({ name: '消息推送', radius: 1 })
+        this.toolsBuilder({
+          name: '消息推送', radius: 1, onClick: () => {
+            this.getUIContext().getRouter().pushUrl({ url: 'pages/MessageSettingsPage' })
+          }
+        })
         this.toolsBuilder({
           name: '深色模式',
           value: this.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK ? '已开启' : '已关闭',
@@ -99,7 +107,11 @@ struct SettingsPage {
 
           }
         })
-        this.toolsBuilder({ name: '当前版本', value: this.version, radius: 2 })
+        this.toolsBuilder({
+          name: '当前版本', value: this.version, radius: 2, onClick: () => {
+            this.getUIContext().getRouter().pushUrl({ url: 'pages/MineAboutPage' })
+          }
+        })
         Blank()
           .height(15)
         Text('退出账号')

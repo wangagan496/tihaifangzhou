@@ -7,8 +7,9 @@ import { contextManager } from '../common/utils/ContextManager'
 @Entry
 @Component
 struct LoginPage {
-  @State username: string = ''
-  @State password: string = ''
+  // Public classroom demo account from the upstream teaching project.
+  @State username: string = 'hmheima'
+  @State password: string = 'Hmheima%123'
   @State isAgree: boolean = false
   @State isLoading: boolean = false
   routerParams: router.RouterOptions | undefined = undefined
