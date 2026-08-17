@@ -8,6 +8,7 @@ import { photoAccessHelper } from '@kit.MediaLibraryKit'
 @CustomDialog
 export struct QuestionShareDialog {
   item: QuestionDetail = {} as QuestionDetail
+  contentType: 0 | 1 = 0
   @StorageProp('user') user: ILoginDta = {} as ILoginDta
   controller: CustomDialogController
 
@@ -43,11 +44,12 @@ export struct QuestionShareDialog {
         Image($r('app.media.icon')).width(40).height(40)
         Text('题海方舟，搞定学习难题')
         Divider().strokeWidth(0.5).color($r('app.color.common_gray_border'))
-        Text('大厂面试题：' + this.item.stem).fontSize(12).maxLines(2).fontWeight(600).width('100%').lineHeight(24)
+        Text((this.contentType === 1 ? '真实面经：' : '大厂面试题：') + this.item.stem)
+          .fontSize(12).maxLines(2).fontWeight(600).width('100%').lineHeight(24)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Column({ space: 20 }) {
           QRCode(this.item.id).width(160).height(160)
-          Text('扫码查看答案').fontSize(12).alignSelf(ItemAlign.Center)
+          Text(this.contentType === 1 ? '扫码阅读面经' : '扫码查看答案').fontSize(12).alignSelf(ItemAlign.Center)
         }.width('100%')
         Blank()
         Text('分享来自：' + (this.user.nickName || this.user.username || '题海方舟')).fontSize(12)

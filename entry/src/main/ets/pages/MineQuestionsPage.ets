@@ -38,10 +38,10 @@ export default struct MineQuestionsPage {
 
   private emptyText(): string {
     if (this.mode === 'collect') {
-      return '还没有收藏题目'
+      return '还没有收藏内容'
     }
     if (this.mode === 'like') {
-      return '还没有点赞题目'
+      return '还没有点赞内容'
     }
     return '还没有浏览记录'
   }
@@ -70,16 +70,23 @@ export default struct MineQuestionsPage {
               .borderRadius(8)
             }
             .onClick(() => {
-              auth.checkAuth({ url: 'pages/QuestionDetailPage', params: { id: item.id } })
+              auth.checkAuth({
+                url: 'pages/QuestionDetailPage',
+                params: {
+                  id: item.id,
+                  type: item.contentType === 1 ? 1 : 0,
+                  questionNo: item.questionNo
+                }
+              })
             })
-          }, (item: MineQuestionRecord) => item.id)
+          }, (item: MineQuestionRecord) => `${item.contentType === 1 ? 1 : 0}_${item.id}`)
         }
         .layoutWeight(1)
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
       } else {
         Column({ space: 16 }) {
           Text(this.emptyText()).fontSize(16).fontColor('#6F6F6F')
-          Text('浏览题目后，这里会自动保留记录').fontSize(13).fontColor('#9AA4B2')
+          Text('浏览题目或面经后，这里会自动保留记录').fontSize(13).fontColor('#9AA4B2')
         }
         .layoutWeight(1)
         .width('100%')

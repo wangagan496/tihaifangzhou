@@ -1,10 +1,10 @@
 import { MineProfileHeader } from './MineProfileHeader'
 import { MineStatsGrid } from './MineStatsGrid'
 import { MineToolsList } from './MineToolsList'
-import { tgRequest } from '../../common/utils/request'
 import { windowManager } from '../../common/utils/WindowManager'
 import { ILoginDta } from '../../models/AccountModel'
-import { StudyTimeData } from '../../pages/StudyTimePage'
+import { auth } from '../../common/utils/Auth'
+import { studyTimeStore } from '../../common/utils/StudyTimeStore'
 
 @Component
 export default struct Mine {
@@ -20,9 +20,8 @@ export default struct Mine {
     windowManager.setStatusBarDark()
   }
 
-  private async getData(): Promise<void> {
-    const res = await tgRequest<StudyTimeData>({ url: '/hm/studyInfo' })
-    this.totalTime = res.totalTime
+  private getData(): void {
+    this.totalTime = studyTimeStore.getTotalTime(auth.getUser()?.id)
   }
 
   build() {

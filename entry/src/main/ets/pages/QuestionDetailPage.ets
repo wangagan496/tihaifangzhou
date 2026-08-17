@@ -7,18 +7,25 @@ import { tracking } from '../common/utils/Tracking'
 import { auth } from '../common/utils/Auth'
 import { mineQuestionStore } from '../common/utils/MineQuestionStore'
 import { MineQuestionRecord } from '../common/utils/MineQuestionPolicy'
+import { studyTimeStore } from '../common/utils/StudyTimeStore'
+import { resolveInterviewIcon } from '../common/utils/InterviewIcon'
 
 export interface QuestionDetail {
   id: string
+  questionNo?: string
   stem: string
   difficulty: number
   likeCount: number
   views: number
   readFlag: 0 | 1
-  answer: string
+  answer?: string
+  content?: string
   collectFlag: 0 | 1
   likeFlag: 0 | 1
-  stage: Array<string>
+  stage?: Array<string>
+  creatorName?: string
+  creatorAvatar?: string
+  createdAt?: string
 }
 
 export interface IBodyData {
@@ -40,20 +47,29 @@ export interface IBodyData {
 
 //接收参数的实体
 export interface ParamsType {
-  id: number
+  id: string
+  type?: 0 | 1
+  questionNo?: string
 }
 
 @Entry
 @Component
 export struct QuestionDetailPage {
   @State
-  questionId: number = 0
+  questionId: string = ''
   @State
   question: QuestionDetail = {} as QuestionDetail
+  @State
+  contentType: 0 | 1 = 0
+  private routeQuestionNo: string = ''
   @StorageProp('topHeight') topHeight: number = 0
   private loadingController: CustomDialogController | undefined = undefined
   @State
   isLoading: boolean = true
+  @State
+  interviewReadComplete: boolean = false
+  private interviewStartAt: number = 0
+  private questionTrackingStarted: boolean = false
 
   // 1、变量保存收集的时间点，id
   // 2、数据请求成功，保存时间点，id
@@ -63,14 +79,16 @@ export struct QuestionDetailPage {
     this.loadQuestionFromRoute()
   }
 
-  // 当前源码在离开详情页时保存一次时长；连续切题覆盖属于已识别边界，详见代码导览。
+  // 离开页面或连续切换内容前保存当前阅读进度。
   aboutToDisappear(): void {
-    tracking.save()
+    this.saveReadingProgress()
   }
 
   private loadQuestionFromRoute(): void {
     const params = this.getUIContext().getRouter().getParams() as ParamsType
     if (params && params.id) {
+      this.contentType = params.type === 1 ? 1 : 0
+      this.routeQuestionNo = params.questionNo || ''
       this.getData(params.id)
       return
     }
@@ -85,8 +103,9 @@ export struct QuestionDetailPage {
   // 1、自定义的加载弹窗，实现，使用ai完成
   // 帮我在这个页面上添加自定义加载弹窗，这个弹窗在项目中写好了，直接使用，发请求之前打开，请求完成之后关闭。
   // 2、加上骨架屏，使用布尔值控制，渲染动态数据的地方，使用骨架屏
-  getData(id: number): void {
+  getData(id: string): void {
     this.questionId = id
+    this.interviewReadComplete = false
     this.loadingController = new CustomDialogController({
       builder: TgLoadingDialog({ message: '加载中...' }),
       autoCancel: false,
@@ -104,12 +123,17 @@ export struct QuestionDetailPage {
       if (userId) {
         mineQuestionStore.recordHistory(userId, this.toMineQuestionRecord())
       }
-      // 详情成功后再启动计时，避免把请求加载耗时计入阅读时长。
-      tracking.start(this.questionId.toString())
+      if (this.contentType === 1) {
+        this.interviewStartAt = Date.now()
+        this.questionTrackingStarted = false
+      } else {
+        tracking.start(this.questionId)
+        this.questionTrackingStarted = true
+      }
       this.closeLoading()
     }, (): void => {
       this.isLoading = false
-      this.showToast('获取题目详情失败')
+      this.showToast(this.contentType === 1 ? '获取面经详情失败' : '获取题目详情失败')
       this.closeLoading()
     })
   }
@@ -121,6 +145,37 @@ export struct QuestionDetailPage {
     }
   }
 
+  private saveReadingProgress(): void {
+    if (this.contentType === 1) {
+      if (this.interviewStartAt <= 0) {
+        return
+      }
+      const startedAt = this.interviewStartAt
+      const endedAt = Date.now()
+      const stayTime = Math.max(1, Math.floor((endedAt - startedAt) / 1000))
+      const questionNo = this.question.questionNo || this.routeQuestionNo
+      this.interviewStartAt = 0
+      studyTimeStore.record(auth.getUser()?.id, this.questionId, startedAt, endedAt)
+      if (!questionNo) {
+        return
+      }
+      tgRequest({
+        url: '/hm/interview/tracking',
+        method: 'POST',
+        data: {
+          questionNo,
+          stayTime,
+          exp: this.interviewReadComplete
+        }
+      }).then((): void => {}, (): void => {})
+      return
+    }
+    if (this.questionTrackingStarted) {
+      this.questionTrackingStarted = false
+      tracking.save()
+    }
+  }
+
   private toMineQuestionRecord(): MineQuestionRecord {
     return {
       id: this.question.id,
@@ -128,14 +183,28 @@ export struct QuestionDetailPage {
       difficulty: this.question.difficulty,
       likeCount: this.question.likeCount,
       views: this.question.views,
-      readFlag: this.question.readFlag
+      readFlag: this.question.readFlag,
+      contentType: this.contentType,
+      questionNo: this.question.questionNo || this.routeQuestionNo
     }
+  }
+
+  private getStages(): string[] {
+    return this.question.stage ? this.question.stage : []
+  }
+
+  private getDetailContent(): string {
+    if (this.contentType === 1) {
+      return this.question.content || '<p>暂无面经正文</p>'
+    }
+    return this.question.answer || '<p>暂无答案内容</p>'
   }
 
   // 跳转上一题，下一题
   onPreOrNext(sign: 'pre' | "next"): void {
     // 题目列表id
-    const idList = AppStorage.get('idList') as Array<number>
+    const idList = AppStorage.get('idList') as Array<string>
+    const questionNoList = AppStorage.get('questionNoList') as Array<string>
     // 判断题目列表是否为空
     if (!idList || idList.length === 0) {
       this.showToast('题目列表为空')
@@ -155,6 +224,8 @@ export struct QuestionDetailPage {
           this.showToast('已经是第一题了')
           return
         }
+        this.saveReadingProgress()
+        this.routeQuestionNo = questionNoList && questionNoList.length > selfIndex - 1 ? questionNoList[selfIndex - 1] : ''
         this.getData(idList[selfIndex - 1])
         break
       case 'next':
@@ -162,6 +233,8 @@ export struct QuestionDetailPage {
           this.showToast('已经是最后一题了')
           return
         }
+        this.saveReadingProgress()
+        this.routeQuestionNo = questionNoList && questionNoList.length > selfIndex + 1 ? questionNoList[selfIndex + 1] : ''
         this.getData(idList[selfIndex + 1])
         break
     }
@@ -171,7 +244,7 @@ export struct QuestionDetailPage {
     tgRequest<null, IBodyData>({
         url: flag === 1 ? 'hm/question/opt' : 'hm/question/unOpt',
         method: 'POST',
-        data: { id: this.questionId, type: 1, optType }
+        data: { id: this.questionId, type: this.contentType, optType }
       }).then((): void => {
       if (optType === 1) {
         this.question.likeFlag = flag
@@ -221,6 +294,7 @@ export struct QuestionDetailPage {
   dialog = new CustomDialogController({
     builder: QuestionShareDialog({
       item: this.question,
+      contentType: this.contentType,
     }),
     customStyle: true,
   })
@@ -252,10 +326,29 @@ export struct QuestionDetailPage {
 
               Row() {
                 if (!this.isLoading && this.question.id) {
-                  TgTag({ difficulty: this.question.difficulty })
-                  ForEach(this.question.stage, (stage: string) => {
-                    this.tagBuilder(stage)
-                  })
+                  if (this.contentType === 1) {
+                    Image(resolveInterviewIcon(this.question.stem, '', this.question.creatorName))
+                      .width(32)
+                      .height(32)
+                      .objectFit(ImageFit.Contain)
+                      .backgroundColor('#EAF4FF')
+                      .borderRadius(16)
+                    Column({ space: 2 }) {
+                      Text(this.question.creatorName || '面经作者')
+                        .fontSize(13)
+                        .fontColor('#4C596A')
+                      Text(this.question.createdAt || '发布时间未知')
+                        .fontSize(11)
+                        .fontColor('#9AA4B2')
+                    }
+                    .alignItems(HorizontalAlign.Start)
+                    .margin({ left: 8 })
+                  } else {
+                    TgTag({ difficulty: this.question.difficulty || 0 })
+                    ForEach(this.getStages(), (stage: string) => {
+                      this.tagBuilder(stage)
+                    })
+                  }
                   Flex({ direction: FlexDirection.Row, justifyContent: FlexAlign.End }) {
                     Image($r('app.media.icon_point')).width(24).bindMenu([
                       {
@@ -274,7 +367,7 @@ export struct QuestionDetailPage {
                         }
                       },
                       {
-                        value: '试题分享',
+                        value: this.contentType === 1 ? '面经分享' : '试题分享',
                         action: () => {
                           this.dialog.open()
                         }
@@ -311,7 +404,7 @@ export struct QuestionDetailPage {
 
               RichText(`                      <html>
                       <body>
-                        <div style="font-size:54px">${this.question.answer}</div>
+                        <div style="font-size:54px">${this.getDetailContent()}</div>
                       <body>
                       </html>
                       `)
@@ -319,13 +412,18 @@ export struct QuestionDetailPage {
             }
             .padding((15))
             .layoutWeight(1)
+            .onReachEnd(() => {
+              if (this.contentType === 1) {
+                this.interviewReadComplete = true
+              }
+            })
           }.layoutWeight(1)
         }
 
       }
     }
     .padding({ top: this.topHeight })
-    .title('题目详情')
+    .title(this.contentType === 1 ? '面经详情' : '题目详情')
     .titleMode(NavigationTitleMode.Mini)
     .mode(NavigationMode.Stack)
     .toolbarConfiguration(this.toggleBuilder())

@@ -5,6 +5,12 @@ export interface MineQuestionRecord {
   likeCount: number
   views: number
   readFlag: 0 | 1
+  contentType?: 0 | 1
+  questionNo?: string
+}
+
+function isSameContent(left: MineQuestionRecord, right: MineQuestionRecord): boolean {
+  return left.id === right.id && (left.contentType || 0) === (right.contentType || 0)
 }
 
 export function addMineQuestion(
@@ -12,7 +18,7 @@ export function addMineQuestion(
   item: MineQuestionRecord,
   limit: number = 50
 ): MineQuestionRecord[] {
-  return [item, ...list.filter((record: MineQuestionRecord) => record.id !== item.id)].slice(0, limit)
+  return [item, ...list.filter((record: MineQuestionRecord) => !isSameContent(record, item))].slice(0, limit)
 }
 
 export function setMineQuestionFlag(
@@ -24,5 +30,5 @@ export function setMineQuestionFlag(
   if (enabled) {
     return addMineQuestion(list, item, limit)
   }
-  return list.filter((record: MineQuestionRecord) => record.id !== item.id)
+  return list.filter((record: MineQuestionRecord) => !isSameContent(record, item))
 }

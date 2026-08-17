@@ -3,6 +3,8 @@ import { tgRequest } from './request';
 import { preferences } from '@kit.ArkData';
 import { contextManager } from './ContextManager';
 import { appendTrackingItem, resolveTrackingQueue, shouldUploadTrackingQueue } from './TrackingPolicy';
+import { studyTimeStore } from './StudyTimeStore';
+import { auth } from './Auth';
 
 class Tracking {
   private timeItem: TimeItem = {} as TimeItem
@@ -16,6 +18,7 @@ class Tracking {
   // 离开详情页时写入本地队列；满 5 条才上报，成功清空、失败保留。
   save(): Promise<void> {
     this.timeItem.endTime = Date.now()
+    studyTimeStore.record(auth.getUser()?.id, this.timeItem.questionId, this.timeItem.startTime, this.timeItem.endTime)
     const context = contextManager.getCtx()
     if (!context) {
       return Promise.resolve()

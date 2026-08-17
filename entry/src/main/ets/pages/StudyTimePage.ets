@@ -1,6 +1,8 @@
 import { IvSkeleton } from '../common/components/IvSkeleton'
 import { tgRequest } from '../common/utils/request'
 import { windowManager } from '../common/utils/WindowManager'
+import { auth } from '../common/utils/Auth'
+import { studyTimeStore } from '../common/utils/StudyTimeStore'
 
 
 export interface StudyTimeItem {
@@ -29,7 +31,7 @@ struct StudyTimePage {
   @State
   project: StudyTimeItem[] = []
   @State
-  totalTime: number = 300
+  totalTime: number = 0
   @StorageProp('topHeight')
   topHeight: number = 0
 
@@ -44,7 +46,10 @@ struct StudyTimePage {
 
   //  转换成百分比
   getPercentText(value: number, total: number) {
-    return Math.round(value / total * 100) + '%'
+    if (total <= 0) {
+      return '0%'
+    }
+    return Math.min(100, Math.max(0, Math.round(value / total * 100))) + '%'
   }
 
   aboutToAppear(): void {
@@ -57,10 +62,16 @@ struct StudyTimePage {
   }
 
   async getData() {
-    const res = await tgRequest<StudyTimeData>({ url: '/hm/studyInfo' })
-    this.project = res.studyData[1].list
-    this.knowledge = res.studyData[0].list
-    this.totalTime = res.totalTime
+    this.totalTime = studyTimeStore.getTotalTime(auth.getUser()?.id)
+    try {
+      const res = await tgRequest<StudyTimeData>({ url: '/hm/studyInfo' })
+      const categories = res.studyData || []
+      this.knowledge = categories.length > 0 ? categories[0].list : []
+      this.project = categories.length > 1 ? categories[1].list : []
+    } catch (_) {
+      this.project = []
+      this.knowledge = []
+    }
   }
 
   build() {
