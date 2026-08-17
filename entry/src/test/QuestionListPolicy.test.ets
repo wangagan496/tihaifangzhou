@@ -3,7 +3,7 @@ import { mergeUniqueQuestions } from '../main/ets/common/utils/QuestionListPolic
 import { QuestionItem } from '../main/ets/views/home/QuestionItemComp'
 
 export default function questionListPolicyTest() {
-  describe('QuestionListPolicy', 0, () => {
+  describe('QuestionListPolicy', () => {
     it('removes duplicate rows while preserving order', 0, () => {
       const first: QuestionItem = { id: '1', stem: 'A', difficulty: 1, likeCount: 0, views: 1, readFlag: 0 }
       const second: QuestionItem = { id: '2', stem: 'B', difficulty: 1, likeCount: 0, views: 2, readFlag: 0 }
