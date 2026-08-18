@@ -8,7 +8,7 @@ import { notificationManager } from '@kit.NotificationKit'
 
 @Entry
 @Component
-export default struct MessageSettingsPage {
+struct MessageSettingsPage {
   @StorageProp('topHeight') topHeight: number = 0
   @State settings: MessageSettings = messageSettingsStore.load()
   @State notificationEnabled: boolean = false
@@ -49,7 +49,7 @@ export default struct MessageSettingsPage {
     }
     this.settings = next
     if (!messageSettingsStore.save(key, enabled)) {
-      this.getUIContext().getPromptAction().showToast({ message: '设置保存失败，请稍后重试' })
+      this.showToast('设置保存失败，请稍后重试')
     }
   }
 
@@ -59,7 +59,7 @@ export default struct MessageSettingsPage {
       await notificationManager.requestEnableNotification(context)
       await this.refreshNotificationState()
     } catch (_) {
-      this.getUIContext().getPromptAction().showToast({ message: '未能开启系统通知权限' })
+      this.showToast('未能开启系统通知权限')
     }
   }
 
@@ -87,9 +87,17 @@ export default struct MessageSettingsPage {
       }
       await notificationManager.publish(request)
       await this.refreshNotificationState()
-      this.getUIContext().getPromptAction().showToast({ message: '测试通知已发送' })
+      this.showToast('测试通知已发送')
     } catch (_) {
-      this.getUIContext().getPromptAction().showToast({ message: '测试通知发送失败' })
+      this.showToast('测试通知发送失败')
+    }
+  }
+
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
     }
   }
 

@@ -20,11 +20,19 @@ export struct MineToolsList {
   }
 
   private openFeedback(): void {
-    this.getUIContext().getRouter().pushUrl({ url: 'pages/MineFeedbackPage' })
+    try {
+      this.getUIContext().getRouter().pushUrl({ url: 'pages/MineFeedbackPage' })
+    } catch (_) {
+      return
+    }
   }
 
   private openAbout(): void {
-    this.getUIContext().getRouter().pushUrl({ url: 'pages/MineAboutPage' })
+    try {
+      this.getUIContext().getRouter().pushUrl({ url: 'pages/MineAboutPage' })
+    } catch (_) {
+      return
+    }
   }
 
   private openSettings(): void {
@@ -34,7 +42,11 @@ export struct MineToolsList {
   private async shareApp(): Promise<void> {
     const context = this.getUIContext().getHostContext() as common.UIAbilityContext
     if (!await shareMineApp(context)) {
-      this.getUIContext().getPromptAction().showToast({ message: '暂时无法打开分享面板' })
+      try {
+        this.getUIContext().getPromptAction().showToast({ message: '暂时无法打开分享面板' })
+      } catch (_) {
+        return
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import { bundleManager } from '@kit.AbilityKit'
 
 @Entry
 @Component
-export default struct MineAboutPage {
+struct MineAboutPage {
   @StorageProp('topHeight') topHeight: number = 0
   @State version: string = '未知版本'
 

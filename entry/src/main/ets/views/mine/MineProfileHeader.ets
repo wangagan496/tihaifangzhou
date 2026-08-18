@@ -12,6 +12,7 @@ export struct MineProfileHeader {
         .width(55)
         .aspectRatio(1)
         .borderRadius(55)
+        .onClick(() => auth.checkAuth({ url: 'pages/ProfileEditPage' }))
       if (this.user.nickName) {
         Column({ space: 4 }) {
           Text(this.user.nickName)
@@ -19,18 +20,6 @@ export struct MineProfileHeader {
             .fontWeight(600)
             .width('100%')
             .margin({ bottom: 5 })
-          Row() {
-            Text('编辑个人信息')
-              .fontColor($r('app.color.ih_gray_color'))
-              .fontSize(11)
-              .margin({ right: 4 })
-            Image($r('app.media.icon_edit'))
-              .width(10)
-              .height(10)
-              .fillColor($r('app.color.ih_gray_color'))
-          }
-          .onClick(() => auth.checkAuth({ url: 'pages/ProfileEditPage' }))
-          .width('100%')
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)

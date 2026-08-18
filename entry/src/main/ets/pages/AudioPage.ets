@@ -38,8 +38,12 @@ struct AudioPage {
   }
 
   private backToPreviousPage(): void {
-    this.getUIContext().getPromptAction().showToast({ message: '麦克风授权失败' })
-    this.getUIContext().getRouter().back()
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: '麦克风授权失败' })
+      this.getUIContext().getRouter().back()
+    } catch (_) {
+      return
+    }
   }
 
   aboutToAppear(): void {

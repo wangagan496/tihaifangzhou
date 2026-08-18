@@ -4,7 +4,11 @@
     "resOptions": {
       "copyCodeResource": {
         "enable": false
-      }
+      },
+      "excludeHarRes": [
+        "@ohos/axios",
+        "@ohmos/calendar"
+      ]
     }
   },
   "buildOptionSet": [

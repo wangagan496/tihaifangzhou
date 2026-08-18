@@ -19,29 +19,43 @@ export struct AudioPlayer {
       return
     }
     this.isTransitioning = true
-    const file = fileIo.openSync(this.item.path, fileIo.OpenMode.READ_ONLY)
-    this.fd = file.fd
-    media.createAVPlayer().then((player) => {
-      player.on('stateChange', (state) => {
-        if (state === 'initialized') {
-          player.prepare().then(() => {}, () => { this.stopPlay() })
-        } else if (state === 'prepared') {
-          player.loop = true
-          this.total = player.duration
-          player.play().then(() => {}, () => { this.stopPlay() })
-        }
-      })
-      player.on('timeUpdate', (time) => { this.value = time })
-      player.url = `fd://${file.fd}`
-      this.avPlayer = player
-      this.playing = true
+    let file: fileIo.File
+    try {
+      file = fileIo.openSync(this.item.path, fileIo.OpenMode.READ_ONLY)
+    } catch (_) {
       this.isTransitioning = false
-    }, () => {
-      Logger.error('startPlay', '播放器创建失败')
+      Logger.error('startPlay', '录音文件无法打开')
+      return
+    }
+    this.fd = file.fd
+    try {
+      media.createAVPlayer().then((player) => {
+        player.on('stateChange', (state) => {
+          if (state === 'initialized') {
+            player.prepare().then(() => {}, () => { this.stopPlay() })
+          } else if (state === 'prepared') {
+            player.setVolume(1)
+            player.loop = true
+            this.total = player.duration
+            player.play().then(() => {}, () => { this.stopPlay() })
+          }
+        })
+        player.on('timeUpdate', (time) => { this.value = time })
+        player.url = `fd://${file.fd}`
+        this.avPlayer = player
+        this.playing = true
+        this.isTransitioning = false
+      }, () => {
+        Logger.error('startPlay', '播放器创建失败')
+        this.playing = false
+        this.isTransitioning = false
+        this.closeFile()
+      })
+    } catch (_) {
       this.playing = false
       this.isTransitioning = false
       this.closeFile()
-    })
+    }
   }
 
   stopPlay(): void {
@@ -53,18 +67,26 @@ export struct AudioPlayer {
       this.closeFile()
       return
     }
-    player.stop().then(() => {
-      player.release().then(() => { this.closeFile() }, () => { this.closeFile() })
-    }, () => {
-      player.release().then(() => { this.closeFile() }, () => { this.closeFile() })
-    })
+    try {
+      player.stop().then(() => {
+        player.release().then(() => { this.closeFile() }, () => { this.closeFile() })
+      }, () => {
+        player.release().then(() => { this.closeFile() }, () => { this.closeFile() })
+      })
+    } catch (_) {
+      this.closeFile()
+    }
   }
 
   private closeFile(): void {
     if (this.fd === undefined) {
       return
     }
-    fileIo.closeSync(this.fd)
+    try {
+      fileIo.closeSync(this.fd)
+    } catch (_) {
+      // The descriptor may already have been closed by a failed player transition.
+    }
     this.fd = undefined
   }
 

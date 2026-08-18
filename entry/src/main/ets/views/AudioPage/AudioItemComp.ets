@@ -28,8 +28,11 @@ export struct AudioItemComp {
       .alignItems(HorizontalAlign.Start)
       .alignSelf(ItemAlign.Start)
     }
-    .padding(15)
-    .height(80)
+    .padding({ left: 14, right: 14, top: 12, bottom: 12 })
+    .height(76)
     .width('100%')
+    .backgroundColor(Color.White)
+    .borderRadius(10)
+    .border({ width: 1, color: '#EEF1F4' })
   }
 }

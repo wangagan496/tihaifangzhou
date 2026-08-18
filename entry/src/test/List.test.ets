@@ -4,6 +4,7 @@ import audioDBTest from './AudioDB.test'
 import mineQuestionPolicyTest from './MineQuestionPolicy.test'
 import profilePolicyTest from './ProfilePolicy.test'
 import questionListPolicyTest from './QuestionListPolicy.test'
+import studyTimePolicyTest from './StudyTimePolicy.test'
 
 export default function testsuite() {
   trackingTest()
@@ -12,4 +13,5 @@ export default function testsuite() {
   mineQuestionPolicyTest()
   profilePolicyTest()
   questionListPolicyTest()
+  studyTimePolicyTest()
 }

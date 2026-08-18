@@ -9,13 +9,17 @@ interface AccountSettingItem {
 
 @Entry
 @Component
-export default struct AccountSettingsPage {
+struct AccountSettingsPage {
   @StorageProp('topHeight') topHeight: number = 0
   @StorageProp('user') user: ILoginDta = {} as ILoginDta
 
   private logout(): void {
     auth.removeUser()
-    this.getUIContext().getRouter().replaceUrl({ url: 'pages/Index' })
+    try {
+      this.getUIContext().getRouter().replaceUrl({ url: 'pages/Index' })
+    } catch (_) {
+      return
+    }
   }
 
   @Builder
@@ -77,12 +81,6 @@ export default struct AccountSettingsPage {
             this.settingRow({ name: '登录账号', value: this.user.username || '未提供' })
             Divider().margin({ left: 16 }).color('#EEF1F4')
             this.settingRow({ name: '用户编号', value: this.user.id || '未提供' })
-            Divider().margin({ left: 16 }).color('#EEF1F4')
-            this.settingRow({
-              name: '编辑个人资料', onClick: () => {
-                auth.checkAuth({ url: 'pages/ProfileEditPage' })
-              }
-            })
           }
           .backgroundColor(Color.White)
           .borderRadius(8)

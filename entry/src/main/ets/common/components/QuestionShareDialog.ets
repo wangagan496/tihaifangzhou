@@ -1,5 +1,5 @@
 import { ILoginDta } from '../../models/AccountModel'
-import { QuestionDetail } from '../../pages/QuestionDetailPage'
+import { QuestionDetail } from '../../models/QuestionDetailModel'
 import { componentSnapshot } from '@kit.ArkUI'
 import { image } from '@kit.ImageKit'
 import { fileIo, fileUri } from '@kit.CoreFileKit'
@@ -12,30 +12,49 @@ export struct QuestionShareDialog {
   @StorageProp('user') user: ILoginDta = {} as ILoginDta
   controller: CustomDialogController
 
-  saveImage(): void {
+  async saveImage(): Promise<void> {
     const context = this.getUIContext().getHostContext()
     if (!context) { return }
-    const pixelMap = componentSnapshot.getSync('share')
-    const imagePacker = image.createImagePacker()
-    imagePacker.packToData(pixelMap, { format: 'image/jpeg', quality: 98 }).then((buffer) => {
-      const imagePath = `${context.cacheDir}/${Date.now()}.jpeg`
-      const file = fileIo.openSync(imagePath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
-      fileIo.writeSync(file.fd, buffer)
-      fileIo.closeSync(file.fd)
-      imagePacker.release()
-      pixelMap.release()
-      const uri = fileUri.getUriFromPath(imagePath)
-      const helper = photoAccessHelper.getPhotoAccessHelper(context)
-      const request = photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(context, uri)
-      helper.applyChanges(request).then(() => {
-        this.controller.close()
-        this.getUIContext().getPromptAction().showToast({ message: '保存成功' })
-      }, () => this.getUIContext().getPromptAction().showToast({ message: '保存失败，请检查图库授权' }))
-    }, () => {
-      imagePacker.release()
-      pixelMap.release()
-      this.getUIContext().getPromptAction().showToast({ message: '保存图片失败' })
-    })
+    try {
+      const pixelMap = componentSnapshot.getSync('share')
+      try {
+        const imagePacker = image.createImagePacker()
+        try {
+          const buffer = await imagePacker.packToData(pixelMap, { format: 'image/jpeg', quality: 98 })
+          const imagePath = `${context.cacheDir}/${Date.now()}.jpeg`
+          const file = fileIo.openSync(imagePath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
+          try {
+            fileIo.writeSync(file.fd, buffer)
+          } finally {
+            try {
+              fileIo.closeSync(file.fd)
+            } catch (_) {
+              // The write failure may already invalidate the descriptor.
+            }
+          }
+          const uri = fileUri.getUriFromPath(imagePath)
+          const helper = photoAccessHelper.getPhotoAccessHelper(context)
+          const request = photoAccessHelper.MediaAssetChangeRequest.createImageAssetRequest(context, uri)
+          await helper.applyChanges(request)
+          this.controller.close()
+          this.showToast('保存成功')
+        } finally {
+          imagePacker.release()
+        }
+      } finally {
+        pixelMap.release()
+      }
+    } catch (_) {
+      this.showToast('保存失败，请检查图库授权')
+    }
+  }
+
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
+    }
   }
 
   build() {

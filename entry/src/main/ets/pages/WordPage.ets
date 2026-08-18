@@ -10,7 +10,7 @@ export interface WordItem {
 
 @Entry
 @Component
-export struct WordPage {
+struct WordPage {
   @StorageProp('topHeight') topHeight: number = 0
   @State
   showTypeSheet: boolean = false // 控制当前阶段分类弹框
@@ -51,20 +51,34 @@ export struct WordPage {
       this.words = {}
       return
     }
-    ctx.resourceManager.getRawFileContent('word.json').then((res): void => {
-      const decoded = new util.TextDecoder().decodeToString(res)
-      const data = JSON.parse(decoded) as Record<string, WordItem[]>
-      this.words = data
-      const categories = Object.keys(data)
-      if (!data[this.currentType] && categories.length > 0) {
-        this.currentType = categories[0]
-      }
-      this.loading = false
-    }, (): void => {
+    try {
+      ctx.resourceManager.getRawFileContent('word.json').then((res): void => {
+        try {
+          const decoded = new util.TextDecoder().decodeToString(res)
+          const data = JSON.parse(decoded) as Record<string, WordItem[]>
+          this.words = data
+          const categories = Object.keys(data)
+          if (!data[this.currentType] && categories.length > 0) {
+            this.currentType = categories[0]
+          }
+          this.loading = false
+        } catch (_) {
+          this.handleWordLoadFailure()
+        }
+      }, (): void => this.handleWordLoadFailure())
+    } catch (_) {
+      this.handleWordLoadFailure()
+    }
+  }
+
+  private handleWordLoadFailure(): void {
       this.words = {}
       this.loading = false
-      this.getUIContext().getPromptAction().showToast({ message: '单词数据加载失败' })
-    })
+      try {
+        this.getUIContext().getPromptAction().showToast({ message: '单词数据加载失败' })
+      } catch (_) {
+        return
+      }
   }
 
   // 单词分类弹窗

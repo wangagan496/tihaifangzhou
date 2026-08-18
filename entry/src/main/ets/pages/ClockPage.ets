@@ -4,7 +4,7 @@ import { IClockData } from '../models/HomeModels'
 
 @Entry
 @Component
-export struct ClockPage {
+struct ClockPage {
   @StorageProp("topHeight") topHeight: number = 0
   @State totalClockinNumber: number = 0 //累计打卡
   @State clockinNumbers: number = 0 //连续打卡
@@ -57,6 +57,8 @@ export struct ClockPage {
         Row() {
           HmCalendar({
             color: '#0094ff',
+            weeks: ['日', '一', '二', '三', '四', '五', '六'],
+            text: '已打卡',
             selectedDays: this.selectedDays,
             onChangeMonth: (month) => {
               this.getClockData(month)

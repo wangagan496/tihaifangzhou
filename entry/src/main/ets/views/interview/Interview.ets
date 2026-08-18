@@ -43,7 +43,7 @@ export default struct Interview {
             .width(18)
             .aspectRatio(1)
             .fillColor('#8A94A3')
-          TextInput({ placeholder: '搜索面经标题', text: $$this.keyword })
+          TextInput({ placeholder: '搜索标题或作者', text: $$this.keyword })
             .fontSize(14)
             .backgroundColor(Color.Transparent)
             .layoutWeight(1)

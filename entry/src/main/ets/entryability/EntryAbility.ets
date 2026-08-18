@@ -1,15 +1,43 @@
-import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Configuration, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { theme } from '../common/utils/Theme';
 
 const DOMAIN = 0x0000;
+const DEMO_USERNAME_PARAM = 'demoUsername';
+const DEMO_PASSWORD_PARAM = 'demoPassword';
 
 export default class EntryAbility extends UIAbility {
   // 启动链路的第一步：保存 Context，供 Preferences、RDB 等非组件工具使用。
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     AppStorage.setOrCreate('context', this.context)
+    AppStorage.setOrCreate('SYSTEM_COLOR_MODE', this.context.config.colorMode)
+    AppStorage.setOrCreate(DEMO_USERNAME_PARAM, '')
+    AppStorage.setOrCreate(DEMO_PASSWORD_PARAM, '')
+    this.applyDemoLoginParameters(want)
     hilog.info(DOMAIN, 'EntryAbility', 'Ability onCreate');
+  }
+
+  onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    this.applyDemoLoginParameters(want)
+  }
+
+  private applyDemoLoginParameters(want: Want): void {
+    const username = want.parameters?.[DEMO_USERNAME_PARAM]
+    const password = want.parameters?.[DEMO_PASSWORD_PARAM]
+    if (typeof username !== 'string' || typeof password !== 'string' ||
+      username.trim().length === 0 || password.length === 0) {
+      return
+    }
+    AppStorage.setOrCreate(DEMO_USERNAME_PARAM, username.trim())
+    AppStorage.setOrCreate(DEMO_PASSWORD_PARAM, password)
+  }
+
+  onConfigurationUpdate(newConfig: Configuration): void {
+    if (newConfig.colorMode !== undefined) {
+      AppStorage.setOrCreate('SYSTEM_COLOR_MODE', newConfig.colorMode)
+      theme.updateSystemColorMode(newConfig.colorMode)
+    }
   }
 
   onDestroy(): void {

@@ -17,7 +17,8 @@ export struct WordSoundDialog {
     if (this.avPlayer || !this.wordEn) {
       return
     }
-    media.createAVPlayer().then((player) => {
+    try {
+      media.createAVPlayer().then((player) => {
       player.on('stateChange', (state: string): void => {
         if (state === 'initialized') {
           player.prepare().then(() => {}, () => { this.disposePlayer() })
@@ -28,9 +29,12 @@ export struct WordSoundDialog {
       })
       player.url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(this.wordEn)}&type=1`
       this.avPlayer = player
-    }, () => {
+      }, () => {
+        this.avPlayer = null
+      })
+    } catch (_) {
       this.avPlayer = null
-    })
+    }
   }
 
   disposePlayer(): void {
@@ -39,11 +43,15 @@ export struct WordSoundDialog {
     if (!player) {
       return
     }
-    player.stop().then(() => {
-      player.release().then(() => {}, () => {})
-    }, () => {
-      player.release().then(() => {}, () => {})
-    })
+    try {
+      player.stop().then(() => {
+        player.release().then(() => {}, () => {})
+      }, () => {
+        player.release().then(() => {}, () => {})
+      })
+    } catch (_) {
+      return
+    }
   }
 
   aboutToDisappear(): void {

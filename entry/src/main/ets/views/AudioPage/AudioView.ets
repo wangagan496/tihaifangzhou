@@ -5,6 +5,8 @@ import { AudioRecordComp } from './AudioRecordComp'
 import { InputDialog } from './InputDialog'
 import { AudioPlayer } from './AudioPlay'
 import { fileIo } from '@kit.CoreFileKit'
+import { AudioRecording } from './AudioRecording'
+import dayjs from 'dayjs'
 
 @Component
 export struct AudioView {
@@ -55,11 +57,42 @@ export struct AudioView {
     }, () => this.showToast('重命名失败，请重试'))
   }
 
-  private saveAudio(item: InterviewAudioItem): void {
-    audioDB.insert(item).then((inserted) => {
-      if (inserted) { this.getList(); return }
+  private saveAudio(recording: AudioRecording): void {
+    const user = auth.getUser()
+    if (!user?.id) {
+      this.removeAudioFile(recording.path)
       this.showToast('录音保存失败')
-    }, () => this.showToast('录音保存失败'))
+      return
+    }
+    const item: InterviewAudioItem = {
+      id: null,
+      user_id: user.id,
+      name: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      path: recording.path,
+      duration: recording.duration,
+      size: recording.size,
+      create_time: recording.createTime
+    }
+    audioDB.insert(item).then((inserted) => {
+      if (inserted) {
+        this.getList()
+        this.showToast('录音保存成功')
+        return
+      }
+      this.removeAudioFile(recording.path)
+      this.showToast('录音保存失败')
+    }, () => {
+      this.removeAudioFile(recording.path)
+      this.showToast('录音保存失败')
+    })
+  }
+
+  private removeAudioFile(path: string): void {
+    try {
+      fileIo.unlinkSync(path)
+    } catch (_) {
+      // The file may already have been removed after an incomplete recording.
+    }
   }
 
   private deleteAudio(item: InterviewAudioItem): void {
@@ -72,23 +105,33 @@ export struct AudioView {
   }
 
   private showToast(message: string): void {
-    this.getUIContext().getPromptAction().showToast({ message })
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
+    }
   }
 
   build() {
     Navigation() {
       Column() {
         Column() {
-          List() {
+          List({ space: 8 }) {
             ForEach(this.list, (item: InterviewAudioItem) => {
               ListItem() { AudioItemComp({ item }) }
                 .swipeAction({ end: this.ListItemSwiperBuilder(item) })
                 .onClick(() => { this.currentItem = item; this.isShow = true })
             })
-          }.width('100%').height('100%')
+          }
+          .width('100%')
+          .height('100%')
+          .padding({ left: 16, right: 16, top: 10, bottom: 10 })
         }.width('100%').layoutWeight(1)
-        AudioRecordComp({ onRecordEnd: (item: InterviewAudioItem) => { this.saveAudio(item) } })
-      }.width('100%').height('100%')
+        AudioRecordComp({ onRecordEnd: (recording: AudioRecording) => this.saveAudio(recording) })
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F5F7FA')
     }.titleMode(NavigationTitleMode.Mini).title('音频').padding({ top: this.topHeight })
       .bindSheet($$this.isShow, this.audioPlayBuilder())
   }

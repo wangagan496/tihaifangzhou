@@ -7,9 +7,8 @@ import { contextManager } from '../common/utils/ContextManager'
 @Entry
 @Component
 struct LoginPage {
-  // Public classroom demo account from the upstream teaching project.
-  @State username: string = 'hmheima'
-  @State password: string = 'Hmheima%123'
+  @StorageLink('demoUsername') username: string = ''
+  @StorageLink('demoPassword') password: string = ''
   @State isAgree: boolean = false
   @State isLoading: boolean = false
   routerParams: router.RouterOptions | undefined = undefined
@@ -41,6 +40,9 @@ struct LoginPage {
       method: 'POST',
       data: { username, password }
     }).then((user) => {
+      if (!user.username) {
+        user.username = username
+      }
       auth.setUser(user)
       const params = this.getUIContext().getRouter().getParams() as IRouterBackParams
       const navigation = params
@@ -60,7 +62,11 @@ struct LoginPage {
   }
 
   private showToast(message: string): void {
-    this.getUIContext().getPromptAction().showToast({ message })
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
+    }
   }
 
   build() {

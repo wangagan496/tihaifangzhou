@@ -8,25 +8,9 @@ import { auth } from '../common/utils/Auth'
 import { mineQuestionStore } from '../common/utils/MineQuestionStore'
 import { MineQuestionRecord } from '../common/utils/MineQuestionPolicy'
 import { studyTimeStore } from '../common/utils/StudyTimeStore'
+import { studyProgressStore } from '../common/utils/StudyProgressStore'
 import { resolveInterviewIcon } from '../common/utils/InterviewIcon'
-
-export interface QuestionDetail {
-  id: string
-  questionNo?: string
-  stem: string
-  difficulty: number
-  likeCount: number
-  views: number
-  readFlag: 0 | 1
-  answer?: string
-  content?: string
-  collectFlag: 0 | 1
-  likeFlag: 0 | 1
-  stage?: Array<string>
-  creatorName?: string
-  creatorAvatar?: string
-  createdAt?: string
-}
+import { QuestionDetail } from '../models/QuestionDetailModel'
 
 export interface IBodyData {
   /**
@@ -50,11 +34,17 @@ export interface ParamsType {
   id: string
   type?: 0 | 1
   questionNo?: string
+  stem?: string
+  content?: string
+  creatorName?: string
+  createdAt?: string
+  questionTypeId?: number
+  questionBankType?: number
 }
 
 @Entry
 @Component
-export struct QuestionDetailPage {
+struct QuestionDetailPage {
   @State
   questionId: string = ''
   @State
@@ -62,6 +52,12 @@ export struct QuestionDetailPage {
   @State
   contentType: 0 | 1 = 0
   private routeQuestionNo: string = ''
+  private routeStem: string = ''
+  private routeInterviewContent: string = ''
+  private routeCreatorName: string = ''
+  private routeCreatedAt: string = ''
+  private routeQuestionTypeId: number = 0
+  private routeQuestionBankType: number = 10
   @StorageProp('topHeight') topHeight: number = 0
   private loadingController: CustomDialogController | undefined = undefined
   @State
@@ -70,6 +66,7 @@ export struct QuestionDetailPage {
   interviewReadComplete: boolean = false
   private interviewStartAt: number = 0
   private questionTrackingStarted: boolean = false
+  private requestSequence: number = 0
 
   // 1、变量保存收集的时间点，id
   // 2、数据请求成功，保存时间点，id
@@ -81,6 +78,8 @@ export struct QuestionDetailPage {
 
   // 离开页面或连续切换内容前保存当前阅读进度。
   aboutToDisappear(): void {
+    this.requestSequence++
+    this.closeLoading(this.loadingController)
     this.saveReadingProgress()
   }
 
@@ -89,6 +88,12 @@ export struct QuestionDetailPage {
     if (params && params.id) {
       this.contentType = params.type === 1 ? 1 : 0
       this.routeQuestionNo = params.questionNo || ''
+      this.routeStem = params.stem || ''
+      this.routeInterviewContent = params.content || ''
+      this.routeCreatorName = params.creatorName || ''
+      this.routeCreatedAt = params.createdAt || ''
+      this.routeQuestionTypeId = params.questionTypeId || 0
+      this.routeQuestionBankType = params.questionBankType || 10
       this.getData(params.id)
       return
     }
@@ -97,16 +102,23 @@ export struct QuestionDetailPage {
   }
 
   private showToast(message: string): void {
-    this.getUIContext().getPromptAction().showToast({ message })
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
+    }
   }
 
   // 1、自定义的加载弹窗，实现，使用ai完成
   // 帮我在这个页面上添加自定义加载弹窗，这个弹窗在项目中写好了，直接使用，发请求之前打开，请求完成之后关闭。
   // 2、加上骨架屏，使用布尔值控制，渲染动态数据的地方，使用骨架屏
   getData(id: string): void {
+    const requestSequence = ++this.requestSequence
     this.questionId = id
     this.interviewReadComplete = false
-    this.loadingController = new CustomDialogController({
+    this.isLoading = true
+    this.closeLoading(this.loadingController)
+    const loadingController = new CustomDialogController({
       builder: TgLoadingDialog({ message: '加载中...' }),
       autoCancel: false,
       alignment: DialogAlignment.Center,
@@ -115,32 +127,42 @@ export struct QuestionDetailPage {
       customStyle: true,
       backgroundColor: 'transparent'
     })
-    this.loadingController.open()
-    tgRequest<QuestionDetail>({ url: `/hm/question/${this.questionId}` }).then((result): void => {
+    this.loadingController = loadingController
+    loadingController.open()
+    tgRequest<QuestionDetail>({ url: `/hm/question/${id}` }).then((result): void => {
+      this.closeLoading(loadingController)
+      if (requestSequence !== this.requestSequence) {
+        return
+      }
       this.question = result
       this.isLoading = false
       const userId = auth.getUser()?.id
       if (userId) {
         mineQuestionStore.recordHistory(userId, this.toMineQuestionRecord())
+        studyProgressStore.record(userId, this.routeQuestionTypeId, this.routeQuestionBankType, id)
       }
       if (this.contentType === 1) {
         this.interviewStartAt = Date.now()
         this.questionTrackingStarted = false
       } else {
-        tracking.start(this.questionId)
+        tracking.start(id)
         this.questionTrackingStarted = true
       }
-      this.closeLoading()
     }, (): void => {
+      this.closeLoading(loadingController)
+      if (requestSequence !== this.requestSequence) {
+        return
+      }
       this.isLoading = false
       this.showToast(this.contentType === 1 ? '获取面经详情失败' : '获取题目详情失败')
-      this.closeLoading()
     })
   }
 
-  private closeLoading(): void {
-    if (this.loadingController) {
-      this.loadingController.close()
+  private closeLoading(controller: CustomDialogController | undefined): void {
+    if (controller) {
+      controller.close()
+    }
+    if (controller === this.loadingController) {
       this.loadingController = undefined
     }
   }
@@ -155,7 +177,8 @@ export struct QuestionDetailPage {
       const stayTime = Math.max(1, Math.floor((endedAt - startedAt) / 1000))
       const questionNo = this.question.questionNo || this.routeQuestionNo
       this.interviewStartAt = 0
-      studyTimeStore.record(auth.getUser()?.id, this.questionId, startedAt, endedAt)
+      const user = auth.getUser()
+      studyTimeStore.record(user?.id, user?.username, this.questionId, startedAt, endedAt)
       if (!questionNo) {
         return
       }
@@ -195,7 +218,7 @@ export struct QuestionDetailPage {
 
   private getDetailContent(): string {
     if (this.contentType === 1) {
-      return this.question.content || '<p>暂无面经正文</p>'
+      return this.question.content || this.routeInterviewContent || '<p>暂无面经正文</p>'
     }
     return this.question.answer || '<p>暂无答案内容</p>'
   }
@@ -320,7 +343,7 @@ export struct QuestionDetailPage {
             Column() {
               Row() {
 
-                Text(this.question.stem).width('100%')
+                Text(this.question.stem || this.routeStem).width('100%')
 
               }
 
@@ -334,10 +357,10 @@ export struct QuestionDetailPage {
                       .backgroundColor('#EAF4FF')
                       .borderRadius(16)
                     Column({ space: 2 }) {
-                      Text(this.question.creatorName || '面经作者')
+                      Text(this.question.creatorName || this.routeCreatorName || '面经作者')
                         .fontSize(13)
                         .fontColor('#4C596A')
-                      Text(this.question.createdAt || '发布时间未知')
+                      Text(this.question.createdAt || this.routeCreatedAt || '发布时间未知')
                         .fontSize(11)
                         .fontColor('#9AA4B2')
                     }

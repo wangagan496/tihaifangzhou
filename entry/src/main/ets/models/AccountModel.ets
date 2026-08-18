@@ -65,7 +65,7 @@ export interface ILoginDta {
    */
   token: string;
   /**
-   * 学习时长，单位s
+   * 学习时长，服务端单位为毫秒；进入应用后统一转换为秒
    */
   totalTime: number;
   /**

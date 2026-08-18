@@ -9,7 +9,7 @@ import { webview } from '@kit.ArkWeb'
  * */
 @Entry
 @Component
-export default struct PrivacyPage {
+struct PrivacyPage {
   controller = new webview.WebviewController()
   url: string | Resource = ''
 

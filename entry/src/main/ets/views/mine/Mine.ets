@@ -8,6 +8,7 @@ import { studyTimeStore } from '../../common/utils/StudyTimeStore'
 
 @Component
 export default struct Mine {
+  @Watch('onUserChange')
   @StorageProp('user') user: ILoginDta = {} as ILoginDta
   @State totalTime: number = 0
 
@@ -16,12 +17,17 @@ export default struct Mine {
     this.getData()
   }
 
+  onUserChange(): void {
+    this.getData()
+  }
+
   aboutToDisappear(): void {
     windowManager.setStatusBarDark()
   }
 
   private getData(): void {
-    this.totalTime = studyTimeStore.getTotalTime(auth.getUser()?.id)
+    const user = auth.getUser()
+    this.totalTime = studyTimeStore.getTotalTime(user?.id, user?.username)
   }
 
   build() {

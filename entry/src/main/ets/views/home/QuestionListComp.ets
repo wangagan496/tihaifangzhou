@@ -5,7 +5,11 @@ import { QuestionItem, QuestionItemComp } from './QuestionItemComp'
 import { FilterParams } from './QuestionFilterComp'
 import { auth } from '../../common/utils/Auth'
 import { mineQuestionStore } from '../../common/utils/MineQuestionStore'
-import { mergeUniqueQuestions, questionKey } from '../../common/utils/QuestionListPolicy'
+import {
+  matchesQuestionKeyword,
+  mergeUniqueQuestions,
+  questionKey
+} from '../../common/utils/QuestionListPolicy'
 
 @Component
 export struct QuestionListComp {
@@ -70,6 +74,8 @@ export struct QuestionListComp {
     this.isRequesting = true
     this.loadFailed = false
     const nextPage = isLoadMore ? this.page + 1 : 1
+    const interviewSearch = this.isInterview && this.keyword.trim().length > 0
+    const pageSize = interviewSearch ? 500 : 10
     if (isLoadMore) {
       this.dialog.open()
     }
@@ -79,16 +85,17 @@ export struct QuestionListComp {
           type: this.typeId,
           questionBankType: this.questionBankType,
           page: nextPage,
-          pageSize: 10,
+          pageSize,
           sort: this.params.sort,
-          keyword: this.keyword
+          keyword: interviewSearch ? '' : this.keyword
         }
       }).then((res): void => {
       this.page = nextPage
       this.totalPage = res.pageTotal
-      this.list = isLoadMore ? mergeUniqueQuestions(this.list, res.rows) : mergeUniqueQuestions([], res.rows)
-      AppStorage.setOrCreate('idList', this.list.map(item => item.id))
-      AppStorage.setOrCreate('questionNoList', this.list.map(item => item.questionNo || ''))
+      const rows = interviewSearch
+        ? res.rows.filter((item: QuestionItem) => matchesQuestionKeyword(item, this.keyword))
+        : res.rows
+      this.list = isLoadMore ? mergeUniqueQuestions(this.list, rows) : mergeUniqueQuestions([], rows)
       this.isRequesting = false
       this.isInitialLoading = false
       this.refreshing = false
@@ -96,9 +103,13 @@ export struct QuestionListComp {
         this.dialog.close()
       }
     }, (): void => {
-      this.getUIContext().getPromptAction().showToast({
-        message: this.isInterview ? '面经加载失败，请稍后重试' : '题目加载失败，请稍后重试'
-      })
+      try {
+        this.getUIContext().getPromptAction().showToast({
+          message: this.isInterview ? '面经加载失败，请稍后重试' : '题目加载失败，请稍后重试'
+        })
+      } catch (_) {
+        // showToast 失败不影响主流程
+      }
       this.isRequesting = false
       this.isInitialLoading = false
       this.loadFailed = !isLoadMore && this.list.length === 0
@@ -174,6 +185,9 @@ export struct QuestionListComp {
                   .onClick(() => {
                     const contentType: 0 | 1 = this.isInterview ? 1 : 0
                     const userId = auth.getUser()?.id
+                    // 在跳转前同步设置 idList，确保详情页上下题导航始终对应当前列表
+                    AppStorage.setOrCreate('idList', this.list.map((i: QuestionItem) => i.id))
+                    AppStorage.setOrCreate('questionNoList', this.list.map((i: QuestionItem) => i.questionNo || ''))
                     if (userId) {
                       mineQuestionStore.recordHistory(userId, {
                         id: item.id,
@@ -188,7 +202,17 @@ export struct QuestionListComp {
                     }
                     auth.checkAuth({
                       url: 'pages/QuestionDetailPage',
-                      params: { id: item.id, type: contentType, questionNo: item.questionNo }
+                      params: {
+                        id: item.id,
+                        type: contentType,
+                        questionNo: item.questionNo,
+                        stem: item.stem,
+                        content: item.content,
+                        creatorName: item.creatorName,
+                        createdAt: item.createdAt,
+                        questionTypeId: this.typeId,
+                        questionBankType: this.questionBankType
+                      }
                     })
                   })
               }

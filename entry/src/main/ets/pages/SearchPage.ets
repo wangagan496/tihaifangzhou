@@ -14,6 +14,7 @@ struct SearchPage {
   @State isDel: boolean = false
   @State list: string[] = []
   @State isInput: boolean = false
+  private readonly recommendedKeywords: string[] = ['html', 'css3', 'javascript', 'vue', 'react']
   private historyFile?: preferences.Preferences
 
   aboutToAppear(): void {
@@ -21,32 +22,49 @@ struct SearchPage {
   }
 
   private initializeHistory(): void {
+    const params = this.getUIContext().getRouter().getParams() as IRouterParams
+    if (params?.keywordText) {
+      this.keyword = params.keywordText.trim()
+    }
     const context = this.getUIContext().getHostContext()
     if (!context) {
       return
     }
-    this.historyFile = preferences.getPreferencesSync(context, { name: 'history' })
-    const params = this.getUIContext().getRouter().getParams() as IRouterParams
-    if (params?.keywordText) {
-      this.keyword = params.keywordText
+    try {
+      this.historyFile = preferences.getPreferencesSync(context, { name: 'history' })
+      this.list = this.historyFile.getSync('list', []) as string[]
+    } catch (_) {
+      this.historyFile = undefined
+      this.list = []
     }
-    this.list = this.historyFile.getSync('list', []) as string[]
   }
 
   private saveHistory(): void {
     if (!this.historyFile) {
       return
     }
-    this.historyFile.putSync('list', this.list)
-    this.historyFile.flushSync()
+    try {
+      this.historyFile.putSync('list', this.list)
+      this.historyFile.flushSync()
+    } catch (_) {
+      this.showToast('搜索记录保存失败')
+    }
   }
 
   private showToast(message: string): void {
-    this.getUIContext().getPromptAction().showToast({ message })
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
+    }
   }
 
   onInputSubmit(): void {
-    const value = this.keyword.trim()
+    this.search(this.keyword)
+  }
+
+  private search(keyword: string): void {
+    const value = keyword.trim()
     if (!value) {
       this.showToast('请输入内容')
       return
@@ -57,7 +75,7 @@ struct SearchPage {
     }
     this.list.unshift(value)
     this.saveHistory()
-    this.keyword = ''
+    this.keyword = value
     this.isInput = false
   }
 
@@ -82,6 +100,10 @@ struct SearchPage {
           Flex({ wrap: FlexWrap.Wrap }) {
             ForEach(this.list, (item: string) => { this.itemBuilder(item) })
           }
+          Text('推荐搜索').fontSize(20).fontWeight(800).width('100%')
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(this.recommendedKeywords, (item: string) => { this.recommendedItemBuilder(item) })
+          }
         } else {
           QuestionListComp({ typeId: 0, selfIndex: 0, params: new FilterParams(), keyword: this.keyword })
         }
@@ -102,7 +124,22 @@ struct SearchPage {
           }
         })
       }
-    }.margin({ right: 10, top: 10 }).padding({ left: 15, right: 15, top: 5, bottom: 5 })
+    }.onClick(() => {
+      if (!this.isDel) {
+        this.keyword = text
+        this.isInput = false
+      }
+    }).margin({ right: 10, top: 10 }).padding({ left: 15, right: 15, top: 5, bottom: 5 })
       .backgroundColor('rgba(0,0,0,0.05)').borderRadius(20)
+  }
+
+  @Builder
+  recommendedItemBuilder(text: string) {
+    Text(text)
+      .onClick(() => { this.search(text) })
+      .margin({ right: 10, top: 10 })
+      .padding({ left: 15, right: 15, top: 5, bottom: 5 })
+      .backgroundColor('rgba(0,0,0,0.05)')
+      .borderRadius(20)
   }
 }

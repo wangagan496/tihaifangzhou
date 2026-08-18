@@ -19,3 +19,12 @@ export function mergeUniqueQuestions(current: QuestionItem[], incoming: Question
   })
   return result
 }
+
+export function matchesQuestionKeyword(item: QuestionItem, keyword: string): boolean {
+  const query = keyword.trim().toLowerCase()
+  if (!query) {
+    return true
+  }
+  return (item.stem || '').toLowerCase().includes(query) ||
+    (item.creatorName || '').toLowerCase().includes(query)
+}

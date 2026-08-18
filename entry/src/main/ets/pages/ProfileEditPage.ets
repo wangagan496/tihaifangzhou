@@ -35,7 +35,11 @@ struct ProfileEditPage {
   }
 
   private showToast(message: string): void {
-    this.getUIContext().getPromptAction().showToast({ message })
+    try {
+      this.getUIContext().getPromptAction().showToast({ message })
+    } catch (_) {
+      return
+    }
   }
 
   private updateAvatar(): void {
@@ -46,68 +50,76 @@ struct ProfileEditPage {
     const picker = new photoAccessHelper.PhotoViewPicker()
     options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE
     options.maxSelectNumber = 1
-    picker.select(options).then((result) => {
-      if (!result.photoUris.length) {
-        return
-      }
-      const context = this.getUIContext().getHostContext()
-      if (!context || !this.user.token) {
-        this.showToast('当前登录状态无效')
-        return
-      }
-      const updateId = this.startAvatarUpdate()
-      let imageBuffer: ArrayBuffer
-      try {
-        imageBuffer = this.readSelectedImage(result.photoUris[0])
-      } catch (_) {
-        this.finishAvatarUpdate(updateId)
-        this.showToast('无法读取所选图片')
-        return
-      }
-      const formData = new FormData()
-      formData.append('file', imageBuffer, { filename: 'avatar.jpg', type: 'image/jpeg' })
-      tgRequest<null, FormData>({
-        url: '/hm/userInfo/avatar',
-        method: 'POST',
-        headers: { 'Content-Type': 'multipart/form-data' },
-        context: context,
-        data: formData
-      }).then(() => {
-        if (!this.isCurrentAvatarUpdate(updateId)) {
+    try {
+      picker.select(options).then((result) => {
+        if (!result.photoUris.length) {
           return
         }
-        tgRequest<ILoginDta>({ url: '/hm/userInfo' }).then((latestUser) => {
+        const context = this.getUIContext().getHostContext()
+        if (!context || !this.user.token) {
+          this.showToast('当前登录状态无效')
+          return
+        }
+        const updateId = this.startAvatarUpdate()
+        const imageBuffer = this.readSelectedImage(result.photoUris[0])
+        if (imageBuffer.byteLength === 0) {
+          this.finishAvatarUpdate(updateId)
+          this.showToast('无法读取所选图片')
+          return
+        }
+        const formData = new FormData()
+        formData.append('file', imageBuffer, { filename: 'avatar.jpg', type: 'image/jpeg' })
+        tgRequest<null, FormData>({
+          url: '/hm/userInfo/avatar',
+          method: 'POST',
+          headers: { 'Content-Type': 'multipart/form-data' },
+          context: context,
+          data: formData
+        }).then(() => {
           if (!this.isCurrentAvatarUpdate(updateId)) {
             return
           }
-          const updatedUser = mergeUserProfile(this.user, latestUser.avatar)
-          this.user = updatedUser
-          auth.setUser(updatedUser)
-          if (this.finishAvatarUpdate(updateId)) {
-            this.showToast('头像更新成功')
-          }
+          // 上传接口成功即反馈，资料刷新只负责同步头像地址。
+          this.showToast('头像更新成功')
+          tgRequest<ILoginDta>({ url: '/hm/userInfo' }).then((latestUser) => {
+            if (this.isCurrentAvatarUpdate(updateId)) {
+              const updatedUser = mergeUserProfile(this.user, latestUser.avatar)
+              this.user = updatedUser
+              auth.setUser(updatedUser)
+            }
+            this.finishAvatarUpdate(updateId)
+          }, () => this.finishAvatarUpdate(updateId))
         }, () => {
           if (this.finishAvatarUpdate(updateId)) {
-            this.showToast('头像已上传，请稍后刷新')
+            this.showToast('上传头像失败')
           }
         })
-      }, () => {
-        if (this.finishAvatarUpdate(updateId)) {
-          this.showToast('上传头像失败')
-        }
-      })
-    }, () => this.showToast('无法打开图片选择器'))
+      }, () => this.showToast('无法打开图片选择器'))
+    } catch (_) {
+      this.showToast('无法打开图片选择器')
+    }
   }
 
   private readSelectedImage(uri: string): ArrayBuffer {
-    const file = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY)
+    let file: fileIo.File
+    try {
+      file = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY)
+    } catch (_) {
+      return new ArrayBuffer(0)
+    }
     try {
       const size = fileIo.statSync(file.fd).size
       const buffer = new ArrayBuffer(size)
       fileIo.readSync(file.fd, buffer)
       return buffer
+    } catch (_) {
+      return new ArrayBuffer(0)
     } finally {
-      fileIo.closeSync(file.fd)
+      try {
+        fileIo.closeSync(file.fd)
+      } catch (_) {
+        // The provider may invalidate the descriptor after the read completes.
+      }
     }
   }
 

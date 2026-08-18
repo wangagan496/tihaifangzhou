@@ -18,26 +18,40 @@ class Tracking {
   // 离开详情页时写入本地队列；满 5 条才上报，成功清空、失败保留。
   save(): Promise<void> {
     this.timeItem.endTime = Date.now()
-    studyTimeStore.record(auth.getUser()?.id, this.timeItem.questionId, this.timeItem.startTime, this.timeItem.endTime)
+    const user = auth.getUser()
+    studyTimeStore.record(user?.id, user?.username, this.timeItem.questionId,
+      this.timeItem.startTime, this.timeItem.endTime)
     const context = contextManager.getCtx()
     if (!context) {
       return Promise.resolve()
     }
-    const trackFile = preferences.getPreferencesSync(context, { name: 'trackFile' })
-    const storedList = trackFile.getSync('list', []) as TimeItem[]
+    let trackFile: preferences.Preferences
+    let storedList: TimeItem[]
+    try {
+      trackFile = preferences.getPreferencesSync(context, { name: 'trackFile' })
+      storedList = trackFile.getSync('list', []) as TimeItem[]
+    } catch (_) {
+      return Promise.resolve()
+    }
     const list = appendTrackingItem(storedList, this.timeItem)
     if (!shouldUploadTrackingQueue(list)) {
-      trackFile.putSync('list', list)
-      trackFile.flushSync()
+      this.persistQueue(trackFile, list)
       return Promise.resolve()
     }
     return tgRequest({ url: '/hm/time/tracking', method: 'POST', data: { timeList: list } }).then((): void => {
-      trackFile.putSync('list', resolveTrackingQueue(list, true))
-      trackFile.flushSync()
+      this.persistQueue(trackFile, resolveTrackingQueue(list, true))
     }, (): void => {
-      trackFile.putSync('list', resolveTrackingQueue(list, false))
-      trackFile.flushSync()
+      this.persistQueue(trackFile, resolveTrackingQueue(list, false))
     })
+  }
+
+  private persistQueue(trackFile: preferences.Preferences, list: TimeItem[]): void {
+    try {
+      trackFile.putSync('list', list)
+      trackFile.flushSync()
+    } catch (_) {
+      return
+    }
   }
 }
 

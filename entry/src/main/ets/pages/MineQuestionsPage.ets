@@ -8,7 +8,7 @@ interface MineQuestionsParams {
 
 @Entry
 @Component
-export default struct MineQuestionsPage {
+struct MineQuestionsPage {
   @State mode: MineQuestionKind = 'history'
   @State list: MineQuestionRecord[] = []
   @StorageProp('topHeight') topHeight: number = 0

@@ -1,27 +1,11 @@
 import { IvSkeleton } from '../common/components/IvSkeleton'
-import { tgRequest } from '../common/utils/request'
 import { windowManager } from '../common/utils/WindowManager'
-import { auth } from '../common/utils/Auth'
-import { studyTimeStore } from '../common/utils/StudyTimeStore'
-
-
-export interface StudyTimeItem {
-  id: string
-  name: string
-  total: number
-  done: number
-  undone: number
-}
-
-export interface StudyTimeCate {
-  type: string,
-  list: StudyTimeItem[]
-}
-
-export interface StudyTimeData {
-  totalTime: number,
-  studyData: StudyTimeCate[]
-}
+import {
+  getStudyData,
+  StudyTimeCate,
+  StudyTimeData,
+  StudyTimeItem
+} from '../common/utils/StudyTimeService'
 
 @Entry
 @Component
@@ -62,16 +46,10 @@ struct StudyTimePage {
   }
 
   async getData() {
-    this.totalTime = studyTimeStore.getTotalTime(auth.getUser()?.id)
-    try {
-      const res = await tgRequest<StudyTimeData>({ url: '/hm/studyInfo' })
-      const categories = res.studyData || []
-      this.knowledge = categories.length > 0 ? categories[0].list : []
-      this.project = categories.length > 1 ? categories[1].list : []
-    } catch (_) {
-      this.project = []
-      this.knowledge = []
-    }
+    const result = await getStudyData()
+    this.totalTime = result.totalTime
+    this.knowledge = result.studyData.length > 0 ? result.studyData[0].list : []
+    this.project = result.studyData.length > 1 ? result.studyData[1].list : []
   }
 
   build() {
@@ -160,7 +138,7 @@ struct StudyTimePage {
                   }
                 })
 
-                GridCol({ span: 2 }) {
+                GridCol() {
                   Row() {
                     Text()
                       .width((7))

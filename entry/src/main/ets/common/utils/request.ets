@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from '@ohos/axios'
 import { contextManager } from './ContextManager'
 import { auth } from './Auth'
-import { isUnauthorizedStatus } from './AuthPolicy'
+import { isUnauthorizedStatus, shouldAttachAuth } from './AuthPolicy'
 
 
 // 创建 axios 实例，配置基础请求地址
@@ -15,7 +15,7 @@ export const instance = axios.create({
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // 从全局存储获取用户信息（包含 token）
   const user = auth.getUser()
-  if (user?.token) {
+  if (user?.token && shouldAttachAuth(config.url)) {
     // 如果存在 token，添加到请求头用于身份验证
     config.headers.Authorization = `Bearer ${user?.token}`
   }

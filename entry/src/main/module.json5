@@ -5,7 +5,10 @@
     },
       {
         "name": "ohos.permission.MICROPHONE",
-        "usedScene": {},
+        "usedScene": {
+          "abilities": ["EntryAbility"],
+          "when": "inuse"
+        },
         "reason": "$string:reason_record"
       }
     ],

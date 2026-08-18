@@ -14,3 +14,11 @@
 *.p12
 *.cer
 *.p7b
+
+# Local UI and document verification artifacts
+/.docx_*/
+/*.png
+/audio-*.json
+/device-*.json
+/layout-*.json
+/mine-*.json

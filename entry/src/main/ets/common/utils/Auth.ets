@@ -1,7 +1,8 @@
 import { ILoginDta } from '../../models/AccountModel';
 import { contextManager } from './ContextManager';
-import { promptAction, router } from '@kit.ArkUI';
+import { router } from '@kit.ArkUI';
 import { buildAuthBackParams, hasLoginToken } from './AuthPolicy';
+import { studyTimeStore } from './StudyTimeStore';
 
 // 1、mine页面判断是否登录，登录了就显示用户信息，没有登录就显示未登录，点击跳转登录页
 // 2、用户数据持久化工具类，封装了AppStorage和PersistentStorage，对原来存用户数据取用户数据的操作进行替换
@@ -13,6 +14,8 @@ class Auth {
 
   // 保存或修改用户信息
   setUser(user: ILoginDta): void {
+    // 学习时长只使用本次应用的本地记录，避免旧接口累计值再次回填。
+    user.totalTime = studyTimeStore.getTotalTime(user.id, user.username)
     AppStorage.set('user', user)
   }
 
@@ -38,17 +41,28 @@ class Auth {
     if (!hasLoginToken(user?.token)) {
       return this.navigateToLogin(options, '请先登录')
     }
-    return contextManager.UiCtx?.getRouter().pushUrl(options).then((): void => {}, (): void => {}) || Promise.resolve()
+    try {
+      return contextManager.UiCtx?.getRouter().pushUrl(options).then((): void => {}, (): void => {}) || Promise.resolve()
+    } catch (_) {
+      return Promise.resolve()
+    }
   }
 
   private navigateToLogin(options: router.RouterOptions, message: string): Promise<void> {
     const backParams = buildAuthBackParams(options.url, options.params)
-    return promptAction.openToast({ message: message }).then(() => {
+    try {
+      contextManager.UiCtx?.getPromptAction().showToast({ message })
+    } catch (_) {
+      // Navigation should still proceed when transient feedback cannot be shown.
+    }
+    try {
       return contextManager.UiCtx?.getRouter().pushUrl({
         url: 'pages/LoginPage',
         params: backParams
-      })
-    }, (): void => {}).then((): void => {}, (): void => {})
+      }).then((): void => {}, (): void => {}) || Promise.resolve()
+    } catch (_) {
+      return Promise.resolve()
+    }
   }
 }
 
