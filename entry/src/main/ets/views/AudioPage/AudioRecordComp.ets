@@ -1,7 +1,7 @@
 import { media } from '@kit.MediaKit'
 import { fileIo } from '@kit.CoreFileKit'
 import { AudioBoComp } from './AudioBoComp'
-import { AudioRecording } from './AudioRecording'
+import { AudioRecording, hasUsableAudioFile } from './AudioRecording'
 
 @Component
 export struct AudioRecordComp {
@@ -14,12 +14,13 @@ export struct AudioRecordComp {
   @State recording: boolean = false
   startTime: number = 0
   private amplitudeReading: boolean = false
-  private validInputSamples: number = 0
-  // The emulator reports a flat ~5-6 when its input route is silent. Keep the
-  // guard just above that floor so ordinary low-volume speech is still saved.
+  private peakAmplitude: number = 0
   private readonly minimumInputAmplitude: number = 20
   private readonly minimumInputDuration: number = 2000
+  // 降噪算法需约 400 ms 校准噪声基底，热身期间不标记 startTime。
+  private readonly warmupMs: number = 400
   private isTransitioning: boolean = false
+  @State warmingUp: boolean = false
   onRecordEnd: (recording: AudioRecording) => void = () => {}
 
   // 音频写入应用沙箱；FD 交给 AVRecorder，停止或失败时必须关闭。
@@ -37,16 +38,15 @@ export struct AudioRecordComp {
     }
     this.fd = file.fd
     this.filePath = path
-    this.validInputSamples = 0
+    this.peakAmplitude = 0
     const config: media.AVRecorderConfig = {
-      // Use the explicit microphone source required by the AVRecorder sample.
-      // The emulator's host route is still selected by the system AudioPolicy.
-      audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC,
+      audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_VOICE_RECOGNITION,
       profile: {
-        audioBitrate: 112000,
-        audioChannels: 2,
+        // Mono AAC is supported by the original recorder flow and is less
+        // dependent on the device's input route than stereo capture.
+        audioBitrate: 100000,
+        audioChannels: 1,
         audioCodec: media.CodecMimeType.AUDIO_AAC,
-        aacProfile: media.AacProfile.AAC_LC,
         audioSampleRate: 48000, fileFormat: media.ContainerFormatType.CFT_MPEG_4A
       },
       url: `fd://${file.fd}`
@@ -61,19 +61,23 @@ export struct AudioRecordComp {
           }, () => {
             recorder.release().then(() => {}, () => {})
             this.clearRecordResources()
+            this.discardFile(path)
             return false
           })
         }, () => {
           recorder.release().then(() => {}, () => {})
           this.clearRecordResources()
+          this.discardFile(path)
           return false
         })
       }, () => {
         this.clearRecordResources()
+        this.discardFile(path)
         return false
       })
     } catch (_) {
       this.clearRecordResources()
+      this.discardFile(path)
       return Promise.resolve(false)
     }
   }
@@ -86,9 +90,7 @@ export struct AudioRecordComp {
     try {
       recorder.getAudioCapturerMaxAmplitude().then((amplitude) => {
         this.maxAmplitude = amplitude
-        if (amplitude >= this.minimumInputAmplitude) {
-          this.validInputSamples++
-        }
+        this.peakAmplitude = Math.max(this.peakAmplitude, amplitude)
         this.amplitudeReading = false
       }, () => {
         this.amplitudeReading = false
@@ -120,14 +122,14 @@ export struct AudioRecordComp {
         })
       }, () => {
         return recorder.release().then(() => {
-          this.avRecorder = undefined
-          this.closeFile()
-          this.maxAmplitude = 0
+            this.avRecorder = undefined
+            this.closeFile()
+            this.maxAmplitude = 0
           return false
         }, () => {
-          this.avRecorder = undefined
-          this.closeFile()
-          this.maxAmplitude = 0
+            this.avRecorder = undefined
+            this.closeFile()
+            this.maxAmplitude = 0
           return false
         })
       })
@@ -157,7 +159,6 @@ export struct AudioRecordComp {
     this.closeFile()
     this.avRecorder = undefined
     this.maxAmplitude = 0
-    this.validInputSamples = 0
   }
 
   private discardFile(path: string): void {
@@ -174,14 +175,19 @@ export struct AudioRecordComp {
   }
 
   private toggleRecord(): void {
-    if (this.isTransitioning) { return }
+    if (this.isTransitioning || this.warmingUp) { return }
     this.isTransitioning = true
     if (!this.recording) {
       this.startRecord().then((started) => {
+        if (!started) { this.isTransitioning = false; this.showToast('无法开始录音'); return }
+        // 热身期间按钮变橙色，400 ms 后降噪算法完成校准，再切到录音状态。
         this.isTransitioning = false
-        if (!started) { this.showToast('无法开始录音'); return }
-        this.startTime = Date.now()
-        this.recording = true
+        this.warmingUp = true
+        setTimeout(() => {
+          this.warmingUp = false
+          this.startTime = Date.now()
+          this.recording = true
+        }, this.warmupMs)
       }, () => {
         this.isTransitioning = false
         this.clearRecordResources()
@@ -191,7 +197,6 @@ export struct AudioRecordComp {
     }
     const path = this.filePath
     const duration = Date.now() - this.startTime
-    const hasAudioInput = this.validInputSamples >= 3
     this.stopRecord().then((stopped) => {
       this.isTransitioning = false
       this.recording = false
@@ -200,14 +205,20 @@ export struct AudioRecordComp {
         this.showToast('录音保存失败')
         return
       }
-      if (duration >= this.minimumInputDuration && !hasAudioInput) {
+      if (duration >= this.minimumInputDuration && this.peakAmplitude < this.minimumInputAmplitude) {
         this.discardFile(path)
-        this.showToast('未检测到麦克风输入，请检查模拟器或系统麦克风设置')
+        this.showToast('未检测到有效麦克风输入，请检查模拟器或系统麦克风设置')
         return
       }
       try {
         const file = fileIo.statSync(path)
-        this.onRecordEnd({ path, duration, size: file.size, createTime: Date.now() })
+        const recording: AudioRecording = { path, duration, size: file.size, createTime: Date.now() }
+        if (!hasUsableAudioFile(recording)) {
+          this.discardFile(path)
+          this.showToast('录音文件为空，请重试')
+          return
+        }
+        this.onRecordEnd(recording)
       } catch (_) {
         this.discardFile(path)
         this.showToast('无法读取录音文件')
@@ -244,8 +255,8 @@ export struct AudioRecordComp {
       .width(52)
       .borderRadius(26)
       .margin({ top: 8 })
-      .backgroundColor(this.recording ? '#E5484D' : $r('app.color.common_blue'))
-      .shadow({ radius: 8, color: this.recording ? '#E5484D44' : '#3A9BFC44', offsetX: 0, offsetY: 3 })
+      .backgroundColor(this.recording ? '#E5484D' : this.warmingUp ? '#F97316' : $r('app.color.common_blue'))
+      .shadow({ radius: 8, color: this.recording ? '#E5484D44' : this.warmingUp ? '#F9731644' : '#3A9BFC44', offsetX: 0, offsetY: 3 })
 
     }
     .width('100%')

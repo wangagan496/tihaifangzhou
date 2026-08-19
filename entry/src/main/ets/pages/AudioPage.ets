@@ -7,6 +7,7 @@ import { windowManager } from '../common/utils/WindowManager'
 @Entry
 @Component
 struct AudioPage {
+  @State permissionReady: boolean = false
   permissions: Permissions[] = ['ohos.permission.MICROPHONE']
   confirmConfig: promptAction.ShowDialogOptions = {
     title: '温馨提示',
@@ -19,8 +20,10 @@ struct AudioPage {
 
   // 麦克风属于敏感能力：运行时授权失败就不初始化录音组件。
   getPermission(): void {
+    this.permissionReady = false
     permission.requestPermissions(this.permissions).then((isGranted) => {
       if (isGranted) {
+        this.permissionReady = true
         return
       }
       this.getUIContext().getPromptAction().showDialog(this.confirmConfig).then((result) => {
@@ -29,6 +32,7 @@ struct AudioPage {
           return
         }
         permission.onSettingPermissions(this.permissions).then((grantedInSettings) => {
+          this.permissionReady = grantedInSettings
           if (!grantedInSettings) {
             this.backToPreviousPage()
           }
@@ -57,7 +61,13 @@ struct AudioPage {
 
   build() {
     Column() {
-      AudioView()
+      if (this.permissionReady) {
+        AudioView()
+      } else {
+        LoadingProgress().width(32).height(32)
+      }
     }
+    .width('100%')
+    .height('100%')
   }
 }
