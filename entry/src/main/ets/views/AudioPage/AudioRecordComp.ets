@@ -15,8 +15,6 @@ export struct AudioRecordComp {
   startTime: number = 0
   private amplitudeReading: boolean = false
   private peakAmplitude: number = 0
-  private readonly minimumInputAmplitude: number = 20
-  private readonly minimumInputDuration: number = 2000
   // 降噪算法需约 400 ms 校准噪声基底，热身期间不标记 startTime。
   private readonly warmupMs: number = 400
   private isTransitioning: boolean = false
@@ -40,7 +38,7 @@ export struct AudioRecordComp {
     this.filePath = path
     this.peakAmplitude = 0
     const config: media.AVRecorderConfig = {
-      audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_VOICE_RECOGNITION,
+      audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC,
       profile: {
         // Mono AAC is supported by the original recorder flow and is less
         // dependent on the device's input route than stereo capture.
@@ -205,17 +203,17 @@ export struct AudioRecordComp {
         this.showToast('录音保存失败')
         return
       }
-      if (duration >= this.minimumInputDuration && this.peakAmplitude < this.minimumInputAmplitude) {
-        this.discardFile(path)
-        this.showToast('未检测到有效麦克风输入，请检查模拟器或系统麦克风设置')
-        return
-      }
       try {
         const file = fileIo.statSync(path)
         const recording: AudioRecording = { path, duration, size: file.size, createTime: Date.now() }
         if (!hasUsableAudioFile(recording)) {
           this.discardFile(path)
           this.showToast('录音文件为空，请重试')
+          return
+        }
+        if (this.peakAmplitude <= 0) {
+          this.discardFile(path)
+          this.showToast('未检测到声音，录音已取消')
           return
         }
         this.onRecordEnd(recording)
