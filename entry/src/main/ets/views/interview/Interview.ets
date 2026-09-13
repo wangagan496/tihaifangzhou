@@ -11,6 +11,7 @@ export default struct Interview {
 
   private applySearch(): void {
     this.queryKeyword = this.keyword.trim()
+    this.getUIContext().getFocusController().clearFocus()
   }
 
   private changeSort(index: number): void {
@@ -66,14 +67,20 @@ export default struct Interview {
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor('#273142')
-        Blank()
+          .layoutWeight(1)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .margin({ right: 8 })
         Select([
           { value: '最新' },
-          { value: '推荐' },
+          { value: '点赞最多' },
           { value: '浏览最多' }
         ])
           .selected(this.selectedSort)
-          .value(this.selectedSort === 0 ? '最新' : this.selectedSort === 1 ? '推荐' : '浏览最多')
+          .value(this.selectedSort === 0 ? '最新' : this.selectedSort === 1 ? '点赞最多' : '浏览最多')
+          .width(116)
+          .height(40)
+          .accessibilityText('面经排序')
           .onSelect((index: number) => this.changeSort(index))
       }
       .width('100%')
