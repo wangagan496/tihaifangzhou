@@ -303,14 +303,22 @@ struct QuestionDetailPage {
   @Builder
   toggleBuilder() {
     Row() {
-      Image($r("app.media.prev_black")).width((80)).onClick(() => {
-        // 上一题业务逻辑
-        this.onPreOrNext('pre')
-      })
-      Image($r("app.media.next_black")).width((80)).onClick(() => {
-        // 下一题业务逻辑
-        this.onPreOrNext('next')
-      })
+      Button('上一题', { type: ButtonType.Normal })
+        .id('previousQuestionButton')
+        .width(120)
+        .height(44)
+        .backgroundColor(Color.Transparent)
+        .fontColor($r('app.color.black'))
+        .accessibilityText('上一题')
+        .onClick(() => this.onPreOrNext('pre'))
+      Button('下一题', { type: ButtonType.Normal })
+        .id('nextQuestionButton')
+        .width(120)
+        .height(44)
+        .backgroundColor(Color.Transparent)
+        .fontColor($r('app.color.black'))
+        .accessibilityText('下一题')
+        .onClick(() => this.onPreOrNext('next'))
     }.width('100%').justifyContent(FlexAlign.SpaceAround)
   }
 
