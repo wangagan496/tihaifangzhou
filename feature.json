@@ -1,7 +1,7 @@
 {
   "feature": "mine",
   "title": "个人中心",
-  "sourceCommit": "bb7163066b4708c20bc88a80b6df5d3485d5fad6",
+  "sourceCommit": "5bf5dcad9c56a722a21b2bd2818b065d0e87fba6",
   "sources": [
     "entry/src/main/ets/common/components/FilterButton.ets",
     "entry/src/main/ets/common/components/IvSkeleton.ets",
@@ -10,6 +10,7 @@
     "entry/src/main/ets/common/utils/AuthPolicy.ets",
     "entry/src/main/ets/common/utils/ContextManager.ets",
     "entry/src/main/ets/common/utils/Logger.ets",
+    "entry/src/main/ets/common/utils/MessageSettingsStore.ets",
     "entry/src/main/ets/common/utils/MineFeedbackStore.ets",
     "entry/src/main/ets/common/utils/MineShare.ets",
     "entry/src/main/ets/common/utils/Permission.ets",
@@ -25,6 +26,7 @@
     "entry/src/main/ets/pages/AccountSettingsPage.ets",
     "entry/src/main/ets/pages/Index.ets",
     "entry/src/main/ets/pages/LoginPage.ets",
+    "entry/src/main/ets/pages/MessageSettingsPage.ets",
     "entry/src/main/ets/pages/MineAboutPage.ets",
     "entry/src/main/ets/pages/MineFeedbackPage.ets",
     "entry/src/main/ets/pages/PrivacyPage.ets",
@@ -39,6 +41,7 @@
     "pages/Index",
     "pages/AccountSettingsPage",
     "pages/LoginPage",
+    "pages/MessageSettingsPage",
     "pages/MineAboutPage",
     "pages/MineFeedbackPage",
     "pages/PrivacyPage",

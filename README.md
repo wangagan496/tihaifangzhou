@@ -16,6 +16,7 @@
 - `pages/Index`
 - `pages/AccountSettingsPage`
 - `pages/LoginPage`
+- `pages/MessageSettingsPage`
 - `pages/MineAboutPage`
 - `pages/MineFeedbackPage`
 - `pages/PrivacyPage`
