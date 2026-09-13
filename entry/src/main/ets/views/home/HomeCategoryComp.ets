@@ -6,12 +6,11 @@ import { QuestionListComp } from './QuestionListComp'
 
 @Component
 export struct HomeCategoryComp {
-  @State index: number = 0
   @State questionTypeList: IQuestionType[] = []
   @State isShow: boolean = false
   @State params: FilterParams = {
     sort: 0,
-    index: this.index
+    index: 0
   }
   @State isLoading: boolean = false
   @StorageProp('isDark') isDark: boolean = false
@@ -39,13 +38,13 @@ export struct HomeCategoryComp {
         Text(q.name)
           .fontSize(15)
           .height(43)
-          .fontColor(this.index === index ? (this.isDark ? Color.White : Color.Black) :
+          .fontColor(this.params.index === index ? (this.isDark ? Color.White : Color.Black) :
             Color.Gray)
         Text()
-          .width(this.index === index ? 20 : 0)
+          .width(this.params.index === index ? 20 : 0)
           .height(2)
           .backgroundColor(Color.Black)
-          .animation({ duration: this.index === index ? 300 : 0 })
+          .animation({ duration: this.params.index === index ? 300 : 0 })
       }
       .padding({ left: index === 0 ? 16 : 0, })
 
@@ -78,7 +77,7 @@ export struct HomeCategoryComp {
       }
     } else {
       Stack({ alignContent: Alignment.TopEnd }) { //设置堆叠位置为右上角
-        Tabs({ index: $$this.index }) {
+        Tabs({ index: this.params.index }) {
           ForEach(this.questionTypeList, (item: IQuestionType, index: number) => {
             TabContent() {
               QuestionListComp({ typeId: item.id, params: this.params, selfIndex: index })
@@ -93,7 +92,7 @@ export struct HomeCategoryComp {
         .barMode(BarMode.Scrollable) // 设置tabs可以滚动
         .barHeight(44)
         .onChange((index) => {
-          this.params.index = index
+          this.selectCategory(index, this.params.sort)
         })
 
         Row() {
@@ -129,14 +128,22 @@ export struct HomeCategoryComp {
         params: this.params,
         // 控制tabs切换
         onSubmit: (params: FilterParams) => {
-          if (this.index !== params.index) {
-            this.index = params.index
-          }
           this.isShow = false
-          // 更新参数，给到QuestionListComp组件
-          this.params = params
+          this.selectCategory(params.index, params.sort)
         }
       })
     }
+  }
+
+  private selectCategory(index: number, sort: number): void {
+    // Tabs also emits onChange when its index is synchronized during layout.
+    // Keep one source of truth and ignore that echo instead of writing state again.
+    if (index === this.params.index && sort === this.params.sort) {
+      return
+    }
+    const next = new FilterParams()
+    next.index = index
+    next.sort = sort
+    this.params = next
   }
 }
