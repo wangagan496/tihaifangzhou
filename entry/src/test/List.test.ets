@@ -6,6 +6,7 @@ import mineQuestionPolicyTest from './MineQuestionPolicy.test'
 import profilePolicyTest from './ProfilePolicy.test'
 import questionListPolicyTest from './QuestionListPolicy.test'
 import studyTimePolicyTest from './StudyTimePolicy.test'
+import interviewCatalogTest from './InterviewCatalog.test'
 
 export default function testsuite() {
   trackingTest()
@@ -16,4 +17,5 @@ export default function testsuite() {
   profilePolicyTest()
   questionListPolicyTest()
   studyTimePolicyTest()
+  interviewCatalogTest()
 }
