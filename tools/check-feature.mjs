@@ -36,6 +36,8 @@ if (fs.existsSync('feature.json')) {
   const actual = sources.filter((file) => file.startsWith(sourceRoot)).sort();
   if (JSON.stringify(actual) !== JSON.stringify(manifest.sources)) throw new Error('Source set differs from feature manifest');
   if (JSON.stringify(pages) !== JSON.stringify(manifest.pages)) throw new Error('Page registry differs from feature manifest');
+  const actualTests = sources.filter((file) => file.startsWith('entry/src/test/') && file.endsWith('.test.ets') && !file.endsWith('/List.test.ets')).sort();
+  if (JSON.stringify(actualTests) !== JSON.stringify([...manifest.tests].sort())) throw new Error('Test set differs from feature manifest');
   const microphone = json5.parse(fs.readFileSync('entry/src/main/module.json5', 'utf8')).module.requestPermissions
     .some((permission) => permission.name === 'ohos.permission.MICROPHONE');
   if (microphone !== (manifest.feature === 'audio')) throw new Error('Unexpected microphone permission');
