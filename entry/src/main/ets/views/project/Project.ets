@@ -6,7 +6,7 @@ import { QuestionListComp } from '../home/QuestionListComp'
 
 @Component
 export default struct Project {
-  @StorageProp('topHeight') topHeight: number = 0
+  @Prop topHeight: number = 0
   @State categories: IQuestionType[] = []
   @State selectedIndex: number = 0
   @State isLoading: boolean = true
