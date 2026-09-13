@@ -113,11 +113,12 @@ hvigorw assembleHap
 
 | 检查项 | 结果 |
 | --- | --- |
-| 本地单元测试 | 36 passed，0 failed，0 error，0 ignored；另有 7 个分支工具回归测试 |
+| 本地单元测试 | 36 passed，0 failed，0 error，0 ignored；当前另有 13 个工具回归测试（含路由扫描和启动故障检测） |
 | Debug HAP | 构建成功 |
 | Release HAP | 构建成功，产物为 `entry/build/default/outputs/default/entry-default-signed.hap` |
 | ohosTest HAP | 保留源代码，本次未构建或执行设备测试包 |
 | 模拟器问题复验 | API 24 模拟器已验证消息设置入口、分类切换、面经排序与长词布局、具名上下题按钮；不替代实体机、大字体、完整读屏或性能验收 |
+| 原生启动冻屏复查 | 发现同时间 RenderService 先 SERVICE_BLOCK、应用后 THREAD_BLOCK_6S 的系统故障；保留数据重启模拟器后 7 次冷启动未新增同类报告，未声称修补模拟器底层缺陷 |
 | 功能分支 | `main` 与 10 个功能分支均通过 Debug HAP 构建、导入/路由检查与对应本地测试 |
 | 演示配置隔离 | Debug 本机注入生效；Release 生成的两个演示字段均为空；本机配置未入库 |
 
