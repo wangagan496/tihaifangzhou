@@ -1,15 +1,8 @@
 {
   "module": {
-    "requestPermissions": [{
-      "name": "ohos.permission.INTERNET"
-    },
+    "requestPermissions": [
       {
-        "name": "ohos.permission.MICROPHONE",
-        "usedScene": {
-          "abilities": ["EntryAbility"],
-          "when": "inuse"
-        },
-        "reason": "$string:reason_record"
+        "name": "ohos.permission.INTERNET"
       }
     ],
     "name": "entry",
@@ -55,7 +48,7 @@
             "name": "ohos.extension.backup",
             "resource": "$profile:backup_config"
           }
-        ],
+        ]
       }
     ]
   }
