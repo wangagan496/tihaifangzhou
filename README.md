@@ -1,6 +1,6 @@
-# 题海方舟 · 题海方舟 · 基础框架
+# 题海方舟 · 面试录音
 
-当前分支：`main`。这里只包含可运行的基础框架，不包含业务页面。
+当前分支：`audio`。这是可独立构建的功能参考分支，保留真实业务和必要依赖，供按功能学习及重写。
 
 完整应用在 `full`，分支职责、依赖边界、构建命令和学习顺序见 [分支说明](docs/BRANCHES.md)。
 
@@ -14,6 +14,10 @@
 ## 当前页面
 
 - `pages/Index`
+- `pages/AccountSettingsPage`
+- `pages/AudioPage`
+- `pages/LoginPage`
+- `pages/PrivacyPage`
 
 ## 验证
 
