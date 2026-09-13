@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { references, resolveImport, sourceRoot, json5 } from './feature-lib.mjs';
+import { references, resolveImport, sourceRoot, json5, validateRequiredPages } from './feature-lib.mjs';
 
 const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
 const tracked = new Set(files.filter((file) => fs.existsSync(file)));
@@ -33,6 +33,7 @@ for (const option of profile.buildOptionSet || []) {
 }
 if (fs.existsSync('feature.json')) {
   const manifest = JSON.parse(fs.readFileSync('feature.json', 'utf8'));
+  validateRequiredPages(manifest.feature, pages);
   const actual = sources.filter((file) => file.startsWith(sourceRoot)).sort();
   if (JSON.stringify(actual) !== JSON.stringify(manifest.sources)) throw new Error('Source set differs from feature manifest');
   if (JSON.stringify(pages) !== JSON.stringify(manifest.pages)) throw new Error('Page registry differs from feature manifest');
