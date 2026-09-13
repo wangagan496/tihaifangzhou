@@ -20,6 +20,7 @@ export struct AudioRecordComp {
   private isTransitioning: boolean = false
   @State warmingUp: boolean = false
   onRecordEnd: (recording: AudioRecording) => void = () => {}
+  onCaptureStateChange: (active: boolean) => void = () => {}
 
   // 音频写入应用沙箱；FD 交给 AVRecorder，停止或失败时必须关闭。
   startRecord(): Promise<boolean> {
@@ -28,10 +29,12 @@ export struct AudioRecordComp {
       return Promise.resolve(false)
     }
     const path = `${context.filesDir}/${Date.now()}.m4a`
+    this.onCaptureStateChange(true)
     let file: fileIo.File
     try {
       file = fileIo.openSync(path, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE)
     } catch (_) {
+      this.onCaptureStateChange(false)
       return Promise.resolve(false)
     }
     this.fd = file.fd
@@ -142,6 +145,7 @@ export struct AudioRecordComp {
   }
 
   private closeFile(): void {
+    this.onCaptureStateChange(false)
     if (this.fd !== undefined) {
       try {
         fileIo.closeSync(this.fd)

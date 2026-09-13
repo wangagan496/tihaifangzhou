@@ -10,10 +10,14 @@ import dayjs from 'dayjs'
 
 @Component
 export struct AudioView {
+  @Prop recordingAllowed: boolean = true
+  @Prop permissionPending: boolean = false
+  onRequestRecording: () => void = () => {}
   @StorageProp('topHeight') topHeight: number = 0
   @State list: InterviewAudioItem[] = []
   @State currentItem: InterviewAudioItem | null = null
   @State isShow: boolean = false
+  @State recordingActive: boolean = false
   dialog = new CustomDialogController({
     builder: InputDialog({
       name: this.currentItem?.name,
@@ -118,16 +122,36 @@ export struct AudioView {
         Column() {
           List({ space: 8 }) {
             ForEach(this.list, (item: InterviewAudioItem) => {
-              ListItem() { AudioItemComp({ item }) }
+              ListItem() {
+                AudioItemComp({ item,
+                  canTranscribe: !this.recordingActive,
+                  onPlay: () => { this.currentItem = item; this.isShow = true },
+                  onTranscribe: () => {
+                    if (item.id !== null && !this.recordingActive) {
+                      auth.checkAuth({ url: 'pages/AudioTranscriptPage', params: { audioId: item.id } })
+                    }
+                  }
+                })
+              }
                 .swipeAction({ end: this.ListItemSwiperBuilder(item) })
-                .onClick(() => { this.currentItem = item; this.isShow = true })
             })
           }
           .width('100%')
           .height('100%')
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
         }.width('100%').layoutWeight(1)
-        AudioRecordComp({ onRecordEnd: (recording: AudioRecording) => this.saveAudio(recording) })
+        if (this.recordingAllowed) {
+          AudioRecordComp({ onRecordEnd: (recording: AudioRecording) => this.saveAudio(recording),
+            onCaptureStateChange: (active: boolean) => { if (this.recordingActive !== active) { this.recordingActive = active } }
+          })
+        } else {
+          Column({ space: 10 }) {
+            Text('已有录音可播放和转写，录制新音频时才需要麦克风权限。')
+              .fontSize(14).fontColor($r('app.color.common_gray_03')).width('100%')
+            Button('启用录音').height(44).width('100%').enabled(!this.permissionPending)
+              .onClick(() => this.onRequestRecording()).id('enableRecording')
+          }.padding(16).width('100%').backgroundColor($r('app.color.white'))
+        }
       }
       .width('100%')
       .height('100%')

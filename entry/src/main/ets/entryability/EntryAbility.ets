@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DEMO_PASSWORD, DEMO_USERNAME } from 'BuildProfile';
 import { theme } from '../common/utils/Theme';
+import { appDiagnostics } from '../common/utils/AppDiagnostics';
 
 const DOMAIN = 0x0000;
 const DEMO_USERNAME_PARAM = 'demoUsername';
@@ -17,6 +18,7 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate(DEMO_PASSWORD_PARAM, DEMO_PASSWORD)
     this.applyDemoLoginParameters(want)
     hilog.info(DOMAIN, 'EntryAbility', 'Ability onCreate');
+    appDiagnostics.start(this.context)
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -42,6 +44,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   onDestroy(): void {
+    appDiagnostics.stop()
     hilog.info(DOMAIN, 'EntryAbility', 'Ability onDestroy');
   }
 

@@ -8,51 +8,34 @@ import { windowManager } from '../common/utils/WindowManager'
 @Component
 struct AudioPage {
   @State permissionReady: boolean = false
+  @State permissionPending: boolean = false
   permissions: Permissions[] = ['ohos.permission.MICROPHONE']
   confirmConfig: promptAction.ShowDialogOptions = {
     title: '温馨提示',
-    message: '未授权使用麦克风将无法使用面试录音功能，是否前往设置进行授权？',
+    message: '录制新音频需要麦克风权限，已有录音的播放和文字转写不受影响。是否前往设置授权？',
     buttons: [
-      { text: '离开', color: $r('app.color.common_gray_01') },
+      { text: '暂不授权', color: $r('app.color.common_gray_01') },
       { text: '去授权', color: $r('app.color.common_blue') }
     ]
   }
 
-  // 麦克风属于敏感能力：运行时授权失败就不初始化录音组件。
-  getPermission(): void {
-    this.permissionReady = false
-    permission.requestPermissions(this.permissions).then((isGranted) => {
-      if (isGranted) {
-        this.permissionReady = true
-        return
-      }
-      this.getUIContext().getPromptAction().showDialog(this.confirmConfig).then((result) => {
-        if (result.index !== 1) {
-          this.backToPreviousPage()
-          return
-        }
-        permission.onSettingPermissions(this.permissions).then((grantedInSettings) => {
-          this.permissionReady = grantedInSettings
-          if (!grantedInSettings) {
-            this.backToPreviousPage()
-          }
-        }, () => this.backToPreviousPage())
-      }, () => this.backToPreviousPage())
-    }, () => this.backToPreviousPage())
-  }
-
-  private backToPreviousPage(): void {
+  // Only request microphone access when the user explicitly enables new recording.
+  async getPermission(): Promise<void> {
+    if (this.permissionPending) { return }
+    this.permissionPending = true
     try {
-      this.getUIContext().getPromptAction().showToast({ message: '麦克风授权失败' })
-      this.getUIContext().getRouter().back()
+      this.permissionReady = await permission.requestPermissions(this.permissions)
+      if (this.permissionReady) { return }
+      const result = await this.getUIContext().getPromptAction().showDialog(this.confirmConfig)
+      if (result.index === 1) { this.permissionReady = await permission.onSettingPermissions(this.permissions) }
     } catch (_) {
-      return
-    }
+      this.permissionReady = false
+    } finally { this.permissionPending = false }
   }
 
   aboutToAppear(): void {
     windowManager.setStatusBarDark()
-    this.getPermission()
+    permission.hasPermissions(this.permissions).then((granted) => { this.permissionReady = granted })
   }
 
   aboutToDisappear(): void {
@@ -61,11 +44,9 @@ struct AudioPage {
 
   build() {
     Column() {
-      if (this.permissionReady) {
-        AudioView()
-      } else {
-        LoadingProgress().width(32).height(32)
-      }
+      AudioView({ recordingAllowed: this.permissionReady, permissionPending: this.permissionPending,
+        onRequestRecording: () => this.getPermission()
+      })
     }
     .width('100%')
     .height('100%')

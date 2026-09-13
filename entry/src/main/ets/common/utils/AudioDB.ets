@@ -1,4 +1,5 @@
 import { relationalStore, ValuesBucket } from '@kit.ArkData'
+import { canSaveTranscript } from './TranscriptionPolicy'
 
 export interface InterviewAudioItem extends ValuesBucket {
   id: number | null
@@ -15,7 +16,7 @@ export class AudioDB {
   private readonly tableName: string = 'interview_audio'
   private initialized: boolean = false
 
-  // RDB 只保存录音元数据；实际 m4a 文件保留在应用沙箱。
+  // 录音文件保留在沙箱；文字稿使用独立表，不改变已有录音表结构。
   initStore(): Promise<boolean> {
     if (this.initialized && this.store) {
       return Promise.resolve(true)
@@ -41,6 +42,15 @@ export class AudioDB {
           )
         `).then((): Promise<void> => {
           return store.executeSql(`CREATE INDEX IF NOT EXISTS idx_${this.tableName}_user_time ON ${this.tableName} (user_id, create_time DESC)`)
+        }).then((): Promise<void> => {
+          return store.executeSql(`CREATE TABLE IF NOT EXISTS interview_audio_transcript (
+            audio_id INTEGER PRIMARY KEY, user_id TEXT NOT NULL, transcript TEXT NOT NULL, updated_time INTEGER NOT NULL
+          )`)
+        }).then((): Promise<void> => {
+          return store.executeSql(`CREATE TRIGGER IF NOT EXISTS delete_audio_transcript
+            AFTER DELETE ON ${this.tableName} BEGIN
+              DELETE FROM interview_audio_transcript WHERE audio_id = OLD.id;
+            END`)
         }).then((): boolean => {
           this.store = store
           this.initialized = true
@@ -71,6 +81,48 @@ export class AudioDB {
     } catch (_) {
       return Promise.resolve(false)
     }
+  }
+
+  async find(id: number, userId: string): Promise<InterviewAudioItem | undefined> {
+    if (!this.store || !Number.isSafeInteger(id) || id <= 0 || !userId) { return undefined }
+    const predicates = new relationalStore.RdbPredicates(this.tableName)
+    predicates.equalTo('id', id).equalTo('user_id', userId)
+    const result = await this.store.query(predicates)
+    try {
+      if (!result.goToFirstRow()) { return undefined }
+      return {
+        id: result.getLong(result.getColumnIndex('id')),
+        user_id: result.getString(result.getColumnIndex('user_id')),
+        name: result.getString(result.getColumnIndex('name')),
+        path: result.getString(result.getColumnIndex('path')),
+        duration: result.getLong(result.getColumnIndex('duration')),
+        size: result.getLong(result.getColumnIndex('size')),
+        create_time: result.getLong(result.getColumnIndex('create_time'))
+      }
+    } finally { result.close() }
+  }
+
+  async getTranscript(id: number, userId: string): Promise<string> {
+    if (!this.store || !Number.isSafeInteger(id) || id <= 0 || !userId) { return '' }
+    const predicates = new relationalStore.RdbPredicates('interview_audio_transcript')
+    predicates.equalTo('audio_id', id).equalTo('user_id', userId)
+    try {
+      const result = await this.store.query(predicates, ['transcript'])
+      try { return result.goToFirstRow() ? result.getString(0) : '' } finally { result.close() }
+    } catch (_) { throw new Error('TRANSCRIPT_READ') }
+  }
+
+  async saveTranscript(id: number, userId: string, text: string): Promise<boolean> {
+    if (!this.store || !canSaveTranscript(id, userId, text)) { return false }
+    const value = text.trim()
+    try {
+      // Conditional insert prevents late recognition results from recreating a deleted/foreign recording.
+      await this.store.executeSql(`INSERT INTO interview_audio_transcript (audio_id, user_id, transcript, updated_time)
+        SELECT id, user_id, ?, ? FROM ${this.tableName} WHERE id = ? AND user_id = ?
+        ON CONFLICT(audio_id) DO UPDATE SET transcript = excluded.transcript, updated_time = excluded.updated_time`,
+        [value, Date.now(), id, userId])
+      return await this.getTranscript(id, userId) === value
+    } catch (_) { return false }
   }
 
   delete(id: number): Promise<boolean> {

@@ -10,6 +10,7 @@
     "pages/StudyTimePage",
     "pages/WordPage",
     "pages/AudioPage",
+    "pages/AudioTranscriptPage",
     "pages/SettingsPage",
     "pages/AccountSettingsPage",
     "pages/MessageSettingsPage",

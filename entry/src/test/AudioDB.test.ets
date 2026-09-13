@@ -21,6 +21,7 @@ export default function audioDBTest() {
       expect(await db.insert(createAudioItem())).assertEqual(false)
       expect(await db.update(createAudioItem())).assertEqual(false)
       expect(await db.delete(1)).assertEqual(false)
+      expect(await db.saveTranscript(1, 'unit-test-user', '文字稿')).assertFalse()
     })
 
     it('queryReturnsEmptyListBeforeInitialization', 0, async () => {
@@ -28,6 +29,8 @@ export default function audioDBTest() {
       const result = await db.query('unit-test-user')
 
       expect(result.length).assertEqual(0)
+      expect(await db.getTranscript(1, 'unit-test-user')).assertEqual('')
+      expect(await db.find(1, 'unit-test-user')).assertUndefined()
     })
   })
 }

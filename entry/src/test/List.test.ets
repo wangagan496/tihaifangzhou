@@ -7,6 +7,8 @@ import profilePolicyTest from './ProfilePolicy.test'
 import questionListPolicyTest from './QuestionListPolicy.test'
 import studyTimePolicyTest from './StudyTimePolicy.test'
 import interviewCatalogTest from './InterviewCatalog.test'
+import diagnosticPolicyTest from './DiagnosticPolicy.test'
+import transcriptionPolicyTest from './TranscriptionPolicy.test'
 
 export default function testsuite() {
   trackingTest()
@@ -18,4 +20,6 @@ export default function testsuite() {
   questionListPolicyTest()
   studyTimePolicyTest()
   interviewCatalogTest()
+  diagnosticPolicyTest()
+  transcriptionPolicyTest()
 }
