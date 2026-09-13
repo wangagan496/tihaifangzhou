@@ -10,6 +10,7 @@
     "entry/src/main/ets/common/utils/Auth.ets",
     "entry/src/main/ets/common/utils/AuthPolicy.ets",
     "entry/src/main/ets/common/utils/ContextManager.ets",
+    "entry/src/main/ets/common/utils/InterviewCatalog.ets",
     "entry/src/main/ets/common/utils/InterviewIcon.ets",
     "entry/src/main/ets/common/utils/Logger.ets",
     "entry/src/main/ets/common/utils/MineQuestionPolicy.ets",
@@ -50,6 +51,7 @@
   ],
   "tests": [
     "entry/src/test/Auth.test.ets",
+    "entry/src/test/InterviewCatalog.test.ets",
     "entry/src/test/MineQuestionPolicy.test.ets",
     "entry/src/test/QuestionListPolicy.test.ets",
     "entry/src/test/StudyTimePolicy.test.ets",
