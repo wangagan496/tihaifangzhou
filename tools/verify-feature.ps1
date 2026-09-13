@@ -12,8 +12,8 @@ $hvigor = Join-Path $deveco 'tools\hvigor\bin\hvigorw.bat'
 $output = Join-Path $workspace ('branch-verification\' + $branch)
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 
-node --test tools/feature-lib.test.mjs
-if ($LASTEXITCODE -ne 0) { throw 'Feature scanner regression tests failed' }
+node --test tools/feature-lib.test.mjs tools/emulator-smoke.test.mjs
+if ($LASTEXITCODE -ne 0) { throw 'Tool regression tests failed' }
 node tools/check-feature.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Feature dependency check failed' }
 git diff --check
