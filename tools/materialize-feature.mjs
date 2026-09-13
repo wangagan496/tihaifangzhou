@@ -141,7 +141,10 @@ export default struct Mine {
 }
 if (definition.view && ['project', 'interview'].includes(feature)) {
   const viewPath = `${sourceRoot}views/${definition.view[1]}.ets`;
-  overrides.set(viewPath, read(viewPath).replace(/\.padding\(\{ top: this\.topHeight \}\)/g, '.padding({ top: 0 })'));
+  const insetBinding = "@StorageProp('topHeight') topHeight: number = 0";
+  if (!read(viewPath).includes(insetBinding)) throw new Error(`Missing inset binding in ${viewPath}`);
+  // Index already applies the system inset; embedded views retain only their own spacing.
+  overrides.set(viewPath, read(viewPath).replace(insetBinding, '@Prop topHeight: number = 0'));
 }
 
 const kept = new Set();
@@ -185,8 +188,9 @@ for (const file of git('ls-files').split('\n').filter(managed)) {
 }
 for (const file of kept) {
   const original = sourceSet.has(file) ? read(file) : '';
-  const newline = original.includes('\r\n') ? '\r\n' : '\n';
-  const content = overrides.has(file) ? overrides.get(file).replace(/\r?\n/g, newline) : original;
+  const existing = fs.existsSync(safePath(root, file)) ? fs.readFileSync(safePath(root, file), 'utf8') : original;
+  const newline = existing.includes('\r\n') ? '\r\n' : '\n';
+  const content = (overrides.get(file) ?? original).replace(/\r?\n/g, newline);
   write(root, file, content);
 }
 const pages = [...kept].filter((file) => file.startsWith(`${sourceRoot}pages/`) && file.endsWith('.ets'))
