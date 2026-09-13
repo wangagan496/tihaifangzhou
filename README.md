@@ -80,13 +80,13 @@ build-profile.json5                    # 工程 SDK、签名和产品构建配�
 | --- | --- |
 | 应用模型 | Stage model |
 | 语言 | ArkTS / `.ets` |
-| 目标 SDK | `6.0.2(22)` |
-| 兼容 SDK | `6.0.2(22)` |
+| 目标 SDK | `6.1.1(24)` |
+| 兼容 SDK | `6.1.1(24)` |
 | 设备类型 | `phone` |
 | 语言资源 | 中文单语言基线 |
 | 包管理器 | ohpm |
 
-推荐直接通过 DevEco Studio 打开工程根目录，确认已安装 `6.0.2(22)` 对应 SDK，再连接真机或启动模拟器运行。录音、相册保存等功能应在真机或具有相应能力的模拟器上验证。
+推荐直接通过 DevEco Studio 打开工程根目录，确认已安装 `6.1.1(24)` 对应 SDK，再连接真机或启动模拟器运行。录音、相册保存等功能应在真机或具有相应能力的模拟器上验证。
 
 ## 快速开始
 
@@ -109,15 +109,17 @@ hvigorw assembleHap
 
 ### 最近一次验证
 
-当前源码在 `6.0.2(22)` 工具链下完成了以下验证：
+本次分支拆分于 2026-09-13 使用本机 `6.1.1(24)` 工具链完成以下验证：
 
 | 检查项 | 结果 |
 | --- | --- |
-| 本地单元测试 | 24 passed，0 failed |
+| 本地单元测试 | 28 passed，0 failed，0 error，0 ignored |
 | Debug HAP | 构建成功 |
 | Release HAP | 构建成功，产物为 `entry/build/default/outputs/default/entry-default-signed.hap` |
-| ohosTest HAP | 编译成功，产物为 `entry/build/default/outputs/ohosTest/entry-ohosTest-signed.hap` |
+| ohosTest HAP | 保留源代码，本次未构建或执行设备测试包 |
 | 设备测试 | 尚未在真机或模拟器执行，不能表述为已通过 |
+| 功能分支 | `main` 与 10 个功能分支均通过 Debug HAP 构建、导入/路由检查与对应本地测试 |
+| 演示配置隔离 | Debug 本机注入生效；Release 生成的两个演示字段均为空；本机配置未入库 |
 
 主包编译仍会输出两条符合当前设计的权限静态提示：`SaveButton` 使用系统临时图库授权保存分享图；录音页所需麦克风权限已在模块中声明，并在运行时向用户申请。
 
@@ -201,7 +203,7 @@ ArkGuard 配置语义可参考鸿蒙官方的[源码混淆文档](https://develo
 - 将 `AppScope/app.json5` 中的占位 `bundleName: com.mine.myapplication` 和 `vendor: example` 替换为发布主体的真实信息；包名确定后不要随意变更。
 - 当前 Release 使用本机 `debugKey` 完成可构建性验证。上架前必须改为独立且受保护的正式发布证书与 Profile，并确认敏感签名材料未进入 Git 历史。
 - 在目标真机或模拟器上实际执行 `ohosTest`，并回归麦克风授权、录音/播放、保存分享图、深浅色切换和服务端登录流程。
-- API 24 是后续生产基线迁移候选。升级时应单独处理 SDK、Hvigor、依赖兼容和 V2 状态管理，不把迁移风险混入当前 `6.0.2(22)` 发布修复。
+- 本次沿用本机已经配置的 API 24，同步了示例配置并验证构建；没有实施 V2 状态管理迁移。后续 SDK、Hvigor、依赖或状态管理升级应单独评估和验证。
 
 ## 许可证
 
