@@ -5,8 +5,8 @@ import { QuestionItem, QuestionItemComp } from './QuestionItemComp'
 import { FilterParams } from './QuestionFilterComp'
 import { auth } from '../../common/utils/Auth'
 import { mineQuestionStore } from '../../common/utils/MineQuestionStore'
+import { loadInterviewCatalog, selectInterviewPage } from '../../common/utils/InterviewCatalog'
 import {
-  matchesQuestionKeyword,
   mergeUniqueQuestions,
   questionKey
 } from '../../common/utils/QuestionListPolicy'
@@ -35,9 +35,39 @@ export struct QuestionListComp {
   @Watch('onFilterParamsChange')
   @Prop params: FilterParams
   selfIndex: number = 0
+  private requestSequence: number = 0
+  private interviewCatalog: QuestionItem[] | undefined = undefined
+  private loadingMore: boolean = false
 
   aboutToAppear(): void {
     this.loadData(false)
+  }
+
+  aboutToDisappear(): void {
+    this.requestSequence++
+    this.isRequesting = false
+    this.closeLoadingMore()
+  }
+
+  private closeLoadingMore(): void {
+    if (this.loadingMore) {
+      this.dialog.close()
+      this.loadingMore = false
+    }
+  }
+
+  private async interviewPage(page: number, keyword: string, sort: number, sequence: number): Promise<IListData> {
+    if (!this.interviewCatalog) {
+      const catalog = await loadInterviewCatalog((currentPage: number, pageSize: number): Promise<IListData> => {
+        return tgRequest<IListData>({
+          url: '/hm/question/list',
+          params: { type: this.typeId, questionBankType: this.questionBankType, page: currentPage, pageSize, sort: 0 }
+        })
+      }, () => sequence === this.requestSequence)
+      if (sequence !== this.requestSequence) { throw new Error('Interview request superseded') }
+      this.interviewCatalog = catalog
+    }
+    return selectInterviewPage(this.interviewCatalog, keyword, sort, page, 10)
   }
 
   onFilterParamsChange() {
@@ -58,9 +88,12 @@ export struct QuestionListComp {
   // 刷新替换第一页，加载更多追加下一页；只有请求成功后才推进 page。
   loadData(isLoadMore: boolean): Promise<void> {
     if (this.selfIndex !== this.params.index) {
+      this.requestSequence++
+      this.isRequesting = false
+      this.closeLoadingMore()
       return Promise.resolve()
     }
-    if (this.isRequesting) {
+    if (isLoadMore && this.isRequesting) {
       return Promise.resolve()
     }
 
@@ -71,38 +104,40 @@ export struct QuestionListComp {
       }
     }
 
+    const sequence = ++this.requestSequence
+    if (!isLoadMore) { this.closeLoadingMore() }
     this.isRequesting = true
     this.loadFailed = false
     const nextPage = isLoadMore ? this.page + 1 : 1
-    const interviewSearch = this.isInterview && this.keyword.trim().length > 0
-    const pageSize = interviewSearch ? 500 : 10
+    const keyword = this.keyword
+    const sort = this.params.sort
+    if (this.isInterview && !isLoadMore) { this.isInitialLoading = true }
     if (isLoadMore) {
       this.dialog.open()
+      this.loadingMore = true
     }
-    return tgRequest<IListData>({
+    const request = this.isInterview ? this.interviewPage(nextPage, keyword, sort, sequence) : tgRequest<IListData>({
         url: '/hm/question/list',
         params: {
           type: this.typeId,
           questionBankType: this.questionBankType,
           page: nextPage,
-          pageSize,
-          sort: this.params.sort,
-          keyword: interviewSearch ? '' : this.keyword
+          pageSize: 10,
+          sort,
+          keyword
         }
-      }).then((res): void => {
+      })
+    return request.then((res): void => {
+      if (sequence !== this.requestSequence) { return }
       this.page = nextPage
       this.totalPage = res.pageTotal
-      const rows = interviewSearch
-        ? res.rows.filter((item: QuestionItem) => matchesQuestionKeyword(item, this.keyword))
-        : res.rows
-      this.list = isLoadMore ? mergeUniqueQuestions(this.list, rows) : mergeUniqueQuestions([], rows)
+      this.list = isLoadMore ? mergeUniqueQuestions(this.list, res.rows) : mergeUniqueQuestions([], res.rows)
       this.isRequesting = false
       this.isInitialLoading = false
       this.refreshing = false
-      if (isLoadMore) {
-        this.dialog.close()
-      }
+      this.closeLoadingMore()
     }, (): void => {
+      if (sequence !== this.requestSequence) { return }
       try {
         this.getUIContext().getPromptAction().showToast({
           message: this.isInterview ? '面经加载失败，请稍后重试' : '题目加载失败，请稍后重试'
@@ -112,11 +147,9 @@ export struct QuestionListComp {
       }
       this.isRequesting = false
       this.isInitialLoading = false
-      this.loadFailed = !isLoadMore && this.list.length === 0
+      this.loadFailed = !isLoadMore && (this.isInterview || this.list.length === 0)
       this.refreshing = false
-      if (isLoadMore) {
-        this.dialog.close()
-      }
+      this.closeLoadingMore()
     })
   }
 
@@ -227,6 +260,7 @@ export struct QuestionListComp {
         }
         .layoutWeight(1)
         .onRefreshing(() => {
+          this.interviewCatalog = undefined
           this.loadData(false)
         })
       }
