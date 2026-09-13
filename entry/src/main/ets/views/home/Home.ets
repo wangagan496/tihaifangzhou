@@ -44,30 +44,38 @@ export default struct Home {
       .padding(10)
 
       // 3.0 轮播图
-      Swiper() {
-        Image($r('app.media.banner_qa'))
-          .objectFit(ImageFit.Fill)
-          .height(200)
-          .borderRadius(10)
+      Row() {
+        Swiper() {
+          Image($r('app.media.banner_qa'))
+            .width('100%')
+            .height('100%')
+            .objectFit(ImageFit.Cover)
+            .borderRadius(10)
 
 
-        Image($r('app.media.banner_pj'))
-          .objectFit(ImageFit.Fill)
-          .height(200)
-          .borderRadius(10)
+          Image($r('app.media.banner_pj'))
+            .width('100%')
+            .height('100%')
+            .objectFit(ImageFit.Cover)
+            .borderRadius(10)
 
 
-        Image($r('app.media.banner_ai'))
-          .objectFit(ImageFit.Fill)
-          .height(200)
-          .borderRadius(10)
+          Image($r('app.media.banner_ai'))
+            .width('100%')
+            .height('100%')
+            .objectFit(ImageFit.Cover)
+            .borderRadius(10)
 
+        }
+        .width('100%')
+        .aspectRatio(16 / 9)
+        .autoPlay(true)
+        .indicator(DotIndicator.dot()
+          .selectedColor(Color.White)
+          .bottom(20))
       }
-      .padding(10)
-      .autoPlay(true)
-      .indicator(DotIndicator.dot()
-        .selectedColor(Color.White)
-        .bottom(20))
+      .width('100%')
+      .padding({ left: 10, right: 10 })
 
       //   4.0 使用题目的分类组件
       HomeCategoryComp()

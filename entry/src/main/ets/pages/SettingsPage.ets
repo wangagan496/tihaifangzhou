@@ -1,7 +1,7 @@
 import { auth } from '../common/utils/Auth';
 import { SettingsThemeDialog } from '../views/SettingsPage/SettingsThemeDialog';
 import { bundleManager, ConfigurationConstant } from '@kit.AbilityKit';
-import { fileIo, storageStatistics } from '@kit.CoreFileKit';
+import { storageStatistics } from '@kit.CoreFileKit';
 import { promptAction } from '@kit.ArkUI';
 
 export interface Tool {
@@ -9,7 +9,8 @@ export interface Tool {
   name: string
   value?: string
   onClick?: () => void,
-  radius?: 0 | 1 | 2
+  radius?: 0 | 1 | 2,
+  enabled?: boolean
 }
 
 @Entry
@@ -24,7 +25,16 @@ struct SettingsPage {
     alignment: DialogAlignment.Bottom
   })
   @State cache: string = '0MB'
+  @State isClearingCache: boolean = false
   @State version: string = '1.0.0'
+  private clearCacheConfirmConfig: promptAction.ShowDialogOptions = {
+    title: '清除应用缓存',
+    message: '仅清除临时缓存，不会删除账号、收藏、错题或录音。',
+    buttons: [
+      { text: '取消', color: $r('app.color.common_gray_01') },
+      { text: '清除', color: $r('app.color.common_blue') }
+    ]
+  }
 
   getVersion(): void {
     bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION).then((bundleInfo): void => {
@@ -49,21 +59,36 @@ struct SettingsPage {
   }
 
   // 清除缓存
-  clearCache(): void {
-    const ctx = AppStorage.get<Context>('context')
-    if (!ctx) {
+  confirmClearCache(): void {
+    if (this.isClearingCache) {
       return
     }
-    const cacheDir = ctx.cacheDir
     try {
-      if (fileIo.accessSync(cacheDir)) {
-        fileIo.rmdirSync(cacheDir)
-      }
+      this.getUIContext().getPromptAction().showDialog(this.clearCacheConfirmConfig).then((result) => {
+        if (result.index === 1) {
+          this.clearCache()
+        }
+      }, () => this.showToast('操作失败，请稍后重试'))
+    } catch (_) {
+      this.showToast('操作失败，请稍后重试')
+    }
+  }
+
+  // 交给系统只清理当前应用的缓存数据，避免删除 cacheDir 根目录。
+  async clearCache(): Promise<void> {
+    if (this.isClearingCache) {
+      return
+    }
+    this.isClearingCache = true
+    try {
+      await bundleManager.cleanBundleCacheFilesForSelf()
       this.showToast('清除成功')
     } catch (_) {
       this.showToast('清除失败，请稍后重试')
+    } finally {
+      this.isClearingCache = false
+      this.getCache()
     }
-    this.getCache()
   }
 
   private showToast(message: string): void {
@@ -106,11 +131,10 @@ struct SettingsPage {
           }
         })
         this.toolsBuilder({
-          name: '清除应用缓存', value: this.cache, onClick: () => {
-            // TODO 清除缓存
-            this.clearCache()
-
-          }
+          name: '清除应用缓存',
+          value: this.isClearingCache ? '清除中…' : this.cache,
+          enabled: !this.isClearingCache,
+          onClick: () => this.confirmClearCache()
         })
         this.toolsBuilder({
           name: '当前版本', value: this.version, radius: 2, onClick: () => {
@@ -173,7 +197,11 @@ struct SettingsPage {
       bottomRight: tool.radius === 2 ? 8 : 0
     })
     .onClick(() => {
-      tool.onClick && tool.onClick()
+      if (tool.enabled !== false) {
+        tool.onClick && tool.onClick()
+      }
     })
+    .enabled(tool.enabled !== false)
+    .opacity(tool.enabled === false ? 0.6 : 1)
   }
 }
