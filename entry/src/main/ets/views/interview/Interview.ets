@@ -3,7 +3,7 @@ import { QuestionListComp } from '../home/QuestionListComp'
 
 @Component
 export default struct Interview {
-  @StorageProp('topHeight') topHeight: number = 0
+  @Prop topHeight: number = 0
   @State keyword: string = ''
   @State queryKeyword: string = ''
   @State params: FilterParams = new FilterParams()
